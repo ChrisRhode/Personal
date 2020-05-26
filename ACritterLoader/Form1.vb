@@ -69,11 +69,11 @@ Public Class Form1
                 For intNdx2 = intStartHour To 24
                     boolInHour(intNdx2) = True
                 Next
-                For intNdx2 = 1 To intEndHour
+                For intNdx2 = 1 To intEndHour - 1
                     boolInHour(intNdx2) = True
                 Next
             Else
-                For intNdx2 = intStartHour To intEndHour
+                For intNdx2 = intStartHour To intEndHour - 1
                     boolInHour(intNdx2) = True
                 Next
             End If

@@ -35,6 +35,21 @@
                      <li><a href="https://github.com/ChrisRhode/SwiftCodingWork">Source code for Swift app on GitHub</a></li>
                     <li><a href="https://github.com/ChrisRhode/MyWebServices/tree/master/UPCSvcs">Source code for C#.NET web service on GitHub</a></li>    
                 </ul>
+             <hr />
+            <h1>Animal Crossing Critter Database</h1>
+            <i>VB.NET (Data Loader) / ASP.NET (VB.NET) (Lookup page) / Microsoft SQL Server</i>
+                <ul>
+                    <li>Implements a web-based tool to display bugs and fish available in Animal Crossing: New Horizons.  The data was
+                        obtained from an existing online source (CSV file export) and imported into SQL Server using the "ACritterLoader"
+                        application, and cleaned up a bit using manual SQL commands.  The lookup tool constructs SQL dynamically to
+                        implement all the possible filter/sort and search options, which are more extensive/precise than the tool
+                        from which the data came.  This was all developed in a few hours including iterating changes and improvements
+                        requested by my roommate, who is an avid Animal Crossing player.
+                    </li>
+                    <li><a href="http://www.zoggoth2.com/AC/Lookup.aspx">Demonstration website</a></li>
+                    <li><a href="https://github.com/ChrisRhode/Personal/tree/master/ACritterLoader">Source code for data loader on GitHub</a></li>
+                    <li><a href="https://github.com/ChrisRhode/Personal/tree/master/Critters">Source code for lookup tool on GitHub</a></li>
+                </ul>
             <hr />
             <h1>BART API</h1>
             <i>ASP.NET (C#.NET)</i>

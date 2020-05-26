@@ -19,7 +19,8 @@ Public Class Lookup
             rblCritterType.SelectedIndex = 2
             rblAvailability.SelectedIndex = 1
             rblSellPrice.SelectedIndex = 0
-            tbSortTerms.Text = "Name"
+            'v1.4 change to default of no sort terms instead of Name by default
+            tbSortTerms.Text = ""
         End If
         If (rblSellPrice.SelectedValue <> "Manual") Then
             tbLow.Enabled = False
@@ -191,8 +192,9 @@ Public Class Lookup
             If (intCritterType <> 0) Then
                 strSQL &= "And (A.CritterType = " & intCritterType & ") "
             End If
+            ' v1.4 fixed to use correct variable for current hour ... oops!!!
             If (strAvailabilitySelected = "Now") Then
-                strSQL &= "AND (A.IDNum IN (SELECT DISTINCT IDNum FROM [ACCritters].[HoursAvailable] WHERE ([Hour] = " & intMonthNumNow & "))) "
+                strSQL &= "AND (A.IDNum IN (SELECT DISTINCT IDNum FROM [ACCritters].[HoursAvailable] WHERE ([Hour] = " & intHourNow & "))) "
             End If
             ' *** issue at month boundaries
             If (strAvailabilitySelected = "Evening + Early Morning") Then
