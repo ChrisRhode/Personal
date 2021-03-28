@@ -17,13 +17,15 @@
             <asp:RadioButtonList ID="rblCritterType" runat="server">
                 <asp:ListItem>Bugs</asp:ListItem>
                 <asp:ListItem>Fish</asp:ListItem>
-                <asp:ListItem>Both</asp:ListItem>
+                <asp:ListItem>Sea</asp:ListItem>
+                <asp:ListItem>All</asp:ListItem>
             </asp:RadioButtonList>
             <asp:Label ID="Label7" runat="server" Font-Bold="True" Text="Availability"></asp:Label>
             <asp:RadioButtonList ID="rblAvailability" runat="server">
                 <asp:ListItem>No filter</asp:ListItem>
                 <asp:ListItem>Current Month</asp:ListItem>
                 <asp:ListItem>This Month or Next Month</asp:ListItem>
+                <asp:ListItem>Leaving This Month</asp:ListItem>
                 <asp:ListItem Value="Now">Right Now</asp:ListItem>
                 <asp:ListItem>Evening + Early Morning</asp:ListItem>
             </asp:RadioButtonList>

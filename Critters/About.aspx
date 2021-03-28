@@ -40,6 +40,11 @@
                     <li>Fix Now to work correctly (wrong variable was used, also modified data because a range of 16:00-18:00 for example does NOT include 18:00-18:59)</li>
                     <li>Remove default sort by name</li>
                 </ul></li>
+                <li>V1.5 07/09/2020
+                <ul>
+                    <li>Add Sea Creatures</li>
+                    <li>Add option to show critters that are going away at the end of the month</li>
+                </ul></li>
             </ol>
             <p></p>
             <asp:Button ID="Button1" runat="server" Text="Go back to Lookup" />

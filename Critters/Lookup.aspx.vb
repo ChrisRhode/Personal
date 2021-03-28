@@ -51,6 +51,9 @@ Public Class Lookup
         Dim intLastNdx As Integer
         Dim intLow As Integer
         Dim intHigh As Integer
+        Dim intThisMonthOnly As Integer
+        Dim intNotNextMonth As Integer
+        Dim strSQLLeavingClausePart As String
         Dim strSQL As String
         Dim strTemp As String
         Dim strSortClause As String
@@ -182,12 +185,26 @@ Public Class Lookup
             If (strAvailabilitySelected = "This Month or Next Month") Then
                 strSQL &= "AND (A.IDNum IN (SELECT DISTINCT IDNum FROM [ACCritters].[MonthsAvailable] WHERE (MonthNum IN (" & intMonthNumNow & "," & intMonthNumNextMonth & ")))) "
             End If
+            If (strAvailabilitySelected = "Leaving This Month") Then
+                intThisMonthOnly = intMonthNumNow
+                intNotNextMonth = intThisMonthOnly + 1
+                If (intNotNextMonth = 13) Then
+                    intNotNextMonth = 1
+                End If
+                strSQLLeavingClausePart = "AND (A.IDNUM IN (SELECT DISTINCT IDNum FROM [ACCritters].[MonthsAvailable] WHERE (MonthNum = " & intThisMonthOnly & "))"
+                strSQLLeavingClausePart &= " AND (NOT (A.IDNUM IN (SELECT DISTINCT IDNum FROM [ACCritters].[MonthsAvailable] WHERE (MonthNum = " & intNotNextMonth & "))))) "
+
+                strSQL &= strSQLLeavingClausePart
+            End If
             intCritterType = 0
             If (strCritterTypeSelected = "Bugs") Then
                 intCritterType = 1
             End If
             If (strCritterTypeSelected = "Fish") Then
                 intCritterType = 2
+            End If
+            If (strCritterTypeSelected = "Sea") Then
+                intCritterType = 3
             End If
             If (intCritterType <> 0) Then
                 strSQL &= "And (A.CritterType = " & intCritterType & ") "
@@ -295,8 +312,10 @@ Public Class Lookup
                 tc = New TableCell
                 If (.Item(2) = 1) Then
                     tc.Text = "Bug"
-                Else
+                ElseIf (.Item(2) = 2) Then
                     tc.Text = "Fish"
+                Else
+                    tc.Text = "Sea"
                 End If
                 tr.Cells.Add(tc)
                 tc = Nothing

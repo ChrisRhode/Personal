@@ -103,7 +103,7 @@ Public Class Form1
         Return intTemp
     End Function
     Private Sub btnRawLoad_Click(sender As Object, e As EventArgs) Handles btnRawLoad.Click
-        Dim strFN As String = "C:\Users\ratcl\Documents\DBData\ACNH_icebear.csv"
+        Dim strFN As String = "C:\Users\ratcl\Documents\DBData\ACNH_icebear_updated.csv"
 
         Dim rdr As New System.IO.StreamReader(strFN)
         Dim strBuffer As String
@@ -143,7 +143,8 @@ Public Class Form1
                 intThisNumElems = UBound(strElements) + 1
                 If (intNumElems = -1) Then
                     intNumElems = intThisNumElems
-                ElseIf (intThisNumElems <> intNumElems) Then
+                End If
+                If (intThisNumElems <> intNumElems) Then
                     DisplayMessage("Inconsistent number of columns at row " & intRowCtr, eMessageType.isError)
                     WriteLog("Offending record: " & strBuffer)
                     WriteLog("Expected " & intNumElems & " columns, saw " & intThisNumElems & " columns")

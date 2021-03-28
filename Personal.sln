@@ -9,6 +9,8 @@ Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "ACritterLoader", "ACritterL
 EndProject
 Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "Critters", "Critters\Critters.vbproj", "{C3EA415E-73D8-4810-B78E-DB162782D51D}"
 EndProject
+Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "NuUberPIM", "NuUberPIM\NuUberPIM.vbproj", "{AFA96A01-12AB-464A-8315-D7891D0D022E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{C3EA415E-73D8-4810-B78E-DB162782D51D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C3EA415E-73D8-4810-B78E-DB162782D51D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C3EA415E-73D8-4810-B78E-DB162782D51D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AFA96A01-12AB-464A-8315-D7891D0D022E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AFA96A01-12AB-464A-8315-D7891D0D022E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AFA96A01-12AB-464A-8315-D7891D0D022E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AFA96A01-12AB-464A-8315-D7891D0D022E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
