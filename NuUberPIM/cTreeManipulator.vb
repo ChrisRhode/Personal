@@ -1,6 +1,7 @@
 ﻿Public Class cTreeManipulator
 
-    Private gboolValidateAfterEveryChange As Boolean = True
+    'Private gboolValidateAfterEveryChange As Boolean = True
+
     Private gboolValidationBypass As Boolean = True
     Private gdtNull As Date = DateValue("01/01/1900")
 
@@ -11,6 +12,8 @@
     Public mstrContentDirectory As String = ""
     Public mstrCurrentPIMFileBasename As String = ""
     Public mstrCurrentDBFileName As String = ""
+    Public mintValidateAfterEveryThisManyChanges As Integer = -1
+    Public mintChangeCounter As Integer = 0
 
     Private mintWriteNodeCounter As Integer
     Private mintWriteMaxNodeNbrSeen As Integer
@@ -47,11 +50,11 @@
 
     Public Sub ApplyNewTransaction(ft As System.IO.StreamWriter, tree As TreeView, strTransactionName As String, theItem As cToDoItem.sItemInfo, theNode As TreeNode)
         ApplyTransaction(ft, tree, strTransactionName, theItem, theNode, Nothing)
-        If (gboolValidateAfterEveryChange And Not (gboolValidationBypass)) Then
-            If (Not ValidateTree(tree, mintNumberOfNodesInTree, mintLastNodeNbrUsed)) Then
-                MessageBox.Show("Warning!  Tree fails validation after transaction!")
-            End If
-        End If
+        'If (gboolValidateAfterEveryChange And Not (gboolValidationBypass)) Then
+        '    If (Not ValidateTree(tree, mintNumberOfNodesInTree, mintLastNodeNbrUsed)) Then
+        '        MessageBox.Show("Warning!  Tree fails validation after transaction!")
+        '    End If
+        'End If
     End Sub
 
     Public Sub ApplyTransactionFromLog(tree As TreeView, strTransactionName As String, strAttributeElements As String())
@@ -71,6 +74,7 @@
 
         Dim strAux As String
         Dim intNdx As Integer
+        Dim boolIsChange As Boolean = False
 
         ' *** this is hacky, it's because during TRN log scan for recovery, nothing has been init'd yet
         If (strTransactionName <> "Open") Then
@@ -100,6 +104,7 @@
                     ft.WriteLine("<Saved " & mintLoadedDBVersion & ">")
                     ft.Flush()
                     L.WriteToLog("Database Saved")
+                    mintChangeCounter = 0
                 End If
                 ' Closing tag is used to verify that a run of the program completed without error
                 ' if it's missing on program startup, program will exit or attempt DB recovery from TRN data
@@ -146,6 +151,7 @@
                 ResortAndRedisplayParent(tree, aNode)
                 mintNumberOfNodesInTree += 1
                 If (Not IsNothing(ft)) Then
+                    boolIsChange = True
                     ' provide human understandable description of action to log
                     L.WriteToLog("Added (" & pItem.strText & ") to (" & localItem.strText & ")")
                 End If
@@ -183,6 +189,7 @@
                 ' *** ensure that events are handled properly (selection before and after)
                 ResortAndRedisplayParent(tree, aNode)
                 If (Not IsNothing(ft)) Then
+                    boolIsChange = True
                     ' provide human understandable description of action to log
                     L.WriteToLog("Edited (" & pItem.strText & ")")
                 End If
@@ -205,6 +212,7 @@
                 aNode = TODO.FindNodeByNodeNbr(tree, intANodeNbr)
                 TODO.MoveNode(tree, aNode, TODO.FindNodeByNodeNbr(tree, 3))
                 If (Not IsNothing(ft)) Then
+                    boolIsChange = True
                     ' provide human understandable description of action to log
                     L.WriteToLog("Deleted (" & theItem.strText & ")")
                 End If
@@ -243,6 +251,7 @@
                 'Application.DoEvents()
                 'gBoolBypassEvents = False
                 If (Not IsNothing(ft)) Then
+                    boolIsChange = True
                     ' provide human understandable description of action to log
                     localItem = pNode.Tag
                     ' *** decoding?
@@ -267,6 +276,7 @@
                 pNode.Tag = pItem
                 ResortAndRedisplayParent(tree, pNode)
                 If (Not IsNothing(ft)) Then
+                    boolIsChange = True
                     ' provide human understandable description of action to log
                     L.WriteToLog("Increase Priority " & pItem.intPriority - 1 & " to " & pItem.intPriority & " (" & pItem.strText & ")")
                 End If
@@ -289,6 +299,7 @@
                 pNode.Tag = pItem
                 ResortAndRedisplayParent(tree, pNode)
                 If (Not IsNothing(ft)) Then
+                    boolIsChange = True
                     ' provide human understandable description of action to log
                     L.WriteToLog("Decrease Priority " & pItem.intPriority + 1 & " to " & pItem.intPriority & " (" & pItem.strText & ")")
 
@@ -296,6 +307,19 @@
             Case Else
                 Throw New Exception("Unknown Transaction Name")
         End Select
+
+        If (boolIsChange) Then
+            mintChangeCounter += 1
+            If (mintValidateAfterEveryThisManyChanges <> -1) Then
+                If ((mintChangeCounter Mod mintValidateAfterEveryThisManyChanges) = 0) Then
+                    If (Not ValidateTree(tree, mintNumberOfNodesInTree, mintLastNodeNbrUsed)) Then
+                        MessageBox.Show("Warning!  Tree fails validation after transaction!")
+                    Else
+                        L.WriteToLog("Auto validation done, passed")
+                    End If
+                End If
+            End If
+        End If
     End Sub
     '
     ' Load and Save

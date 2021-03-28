@@ -1,55 +1,63 @@
 ﻿Imports System.ComponentModel
-' (DONE) Fix for validation after initial load only
-' (DONE) after simple move, select node that was moved not where it was moved to?
-' (FIXED) priority algorithm ... was not handling priority corrrectly in several cases
-' Apparently, adding an expanded node to a node triggers after expand??  curious ... problematical?  look at later
-' ReSort is done on Add or Edit ... but not on initial build, if we do it better, can avoid needing to re-sort so much
-' (DONE) Should there be a tree sanity validator that can be called on demand?
-' (DONE) need to walk through again, node expand and after selects that happen towards and moving a node
-' .. seems like excessive chatter, resort/redisplay node is part of it, get nested select/expand events
-' .... fixed sudden breakage of move due to nested select/expand events, expand undid ignore events
-' ...... this will become a problem if other event procs want to ignore events
-' ...... go through expand, resort, select/unselect chains
-' set up "related to" and maybe "dependent on" (will be some work!)
-' Two options set at start of every source file
-' Magic to display version # of app
-' Test encode/decode with legitimate unicode (emdash family)(emoticons as an example)(umlauted chars?)
-' Passing nodes by value, but altering their Tag?
-' Passing TreeViews by value?  Or does it do ByRef under the hood?
-' What defines node a == node b ... text? tag? address/checksum? other?
-' cTreeManipulator should be INSTANCED as either live or copy mode ... New() ... do not pass params to every call
-' consistency on New vs not for items ... be sure to set into tag of node
-' (FIXED - AfterSelect nests during sort after move)(FIXED - had dup node from previous bug) 
-' (DONE) Next Up: TRN verify (base + TRN so far) = current
-' Exercise TRN log base + TRN so far = current
+' On any release build, eliminate any code warnings
+' AutoSave after N changes? (if TRN works well this should not be needed, try very log TRN recovery)
+' Clean up transaction functions form
+' .. what does check current instance do vs Check button now on main form
+' .. display fake tree based on start to item selected in transaction list box (validate it after setting it up)
+' .. save selected state as new current (default is using the whole selection)
 ' Then work rewind/apply step by step with show, and ability to then resave that new state as current
 ' .. work code to allow apply not all of trn file ... auto applying all may just crash again (manual edit to TRN file for now)
 ' .. ready to work on rollback from start of previous version / can do an undo also
 ' .. also auto verify and save when idle or after N operations (option)
+' .. Exercise TRN log base + TRN so far = current
+' using new change counter, save new version on close only if there are changes since last save
+' do we need/want form indicator for resort,validation etc in progress?
+' work on preventing illegal moves
+' (DONE) Fix for validation after initial load only
+' (DONE) after simple move, select node that was moved not where it was moved to?
+' (FIXED) priority algorithm ... was not handling priority corrrectly in several cases
+' ReSort is done on Add or Edit ... but not on initial build, if we do it better, can avoid needing to re-sort so much
+' (DONE) Should there be a tree sanity validator that can be called on demand?
+' (DONE) need to walk through again, node expand and after selects that happen towards and moving a node
+' Further testing and research on events
+' .. Apparently, adding an expanded node to a node triggers after expand??  curious ... problematical?  look at later
+' .. seems like excessive chatter, resort/redisplay node is part of it, get nested select/expand events
+' .... fixed sudden breakage of move due to nested select/expand events, expand undid ignore events
+' ...... this will become a problem if other event procs want to ignore events
+' ...... go through expand, resort, select/unselect chains
+' ..(FIXED - AfterSelect nests during sort after move)(FIXED - had dup node from previous bug) 
+' set up "related to" and maybe "dependent on" (will be some work!)
+' Two options set at start of every source file
+' Magic to display version # of app
+' Test encode/decode with legitimate unicode (emdash family)(emoticons as an example)(umlauted chars?)
+'.... use of TextBox may foil this ... e.g emdash is apparently changed to a regular dash
+' Passing nodes by value, but altering their Tag?
+' Passing TreeViews by value?  Or does it do ByRef under the hood?
+' What defines node a == node b ... text? tag? address/checksum? other?
+' Make sure on ref to structure vs new structure, and copy of reference vs direct reference
+' cTreeManipulator should be INSTANCED as either live or copy mode ... New() ... do not pass params to every call
+' ..Sanity check all trn log class creation/entry, clean up (e.g. should just pass tv on New)
+' ..should not be passing tree into calls any more, its in the transaction class
+' consistency on New vs not for items ... be sure to set into tag of node
 ' Also heavy testing needed for all operations (disallow and perform)
 ' (DONE) Soon need to be able to use TRN to recover from code crash
-' Sanity check all trn log class creation/entry, clean up (e.g. should just pass tv on New)
-' ..should not be passing tree into calls any more, its in the transaction class
 ' (WORKED AROUND) weirdness with EOL on TRNLOG during recovery
 ' look for sanity and extra new version after auto recovery
-' redundancy of save at close if there are no further changes
 ' initial form size weirdness vs in designer
 ' FULL CODE LOGIC CHECK AND REORGANIZE
 ' (DONE) outer exception handler + check file
 ' move things "around" between main, tree manipulator and ToDoItem
 ' (DONE) special protections needed for special nodes
-' *** move logic protections to prevent circular nesting or moving x into something inside itself?
 ' global and module variables nothing, check if nothing
 ' parameters check to assure nothing
 ' proper mix of passing nodes or node tags (items) to routines
 ' (FIXED) TRN file is recreating/overwriting each time ... not good
-' Make sure on ref to structure vs new structure, and copy of reference vs direct reference
 ' SelectedNode, always one or can be many?  Assuming exactly one right now e.g. for Edit
 ' (FIXED) Move is not being permanent ... probably not refreshing tag in nodes? (no, need to set intParentNbr when moving)
 ' (INVALIDATED) Need to record the node types in the data for sense on special node types to work (node number implies special node for now)
 ' Disallow deletes of any child of trash
 ' (DONE) Clean up event sequence / bypass of events during move / DoEvents
-' Double check for ContentFile state before doing backup/rename/write
+' Double check for ContentFile state before doing backup/rename/write (?)
 ' (FIXED) System.IO.File.OpenText, CreateText, AppendText vs old Open (New vs not)
 ' (FIXED) on open existing verify last node number
 ' *** after we implement true delete, there will be holes in node numbers (should mostly handle now)
@@ -58,22 +66,21 @@
 ' Incremental search should not show special nodes (only issue during new file?)
 ' (DONE) Auto expand ToDo and QuickAccess when first child is added
 ' (FIXED) Quick Add + Enhanced Add / allow for other attributes and write to database
-' (MOSTLY DONE) Add display (done)/sorting (to do) handlers for Dates etc.
-' ... item with a bump to top of today still comes before an item with a date of event of today
+' (DONE) Add display (done)/sorting (to do) handlers for Dates etc.
+' (FIXED) ... item with a bump to top of today still comes before an item with a date of event of today
 ' (FIXED/MERGED) Ensure text and notes are converted/protected ... especially control chars like NL,CR,LF
 ' (FIXED) Any change to a node content (not position) should change modify date
-' Do not change modify date for certain types of changes
+' Do not change modify date for certain types of changes (?)
 ' (FIXED) compact storage of all node attributes
-' add checkbox display and support
 ' *** where is intParentNodeNbr set/looked at
-' Form closing block or act as Ok/Cancel (on main form can lose data if close without save)
+' All forms: Form closing block or act as Ok/Cancel (on main form can lose data if close without save)
 ' (FIXED) Current brain freeze: add then extended edit ... node with values is not created yet
 ' INFO: Load event fires on Show or ShowDialog, not on instantiation
 ' INFO: TextChanged does not fire if you set the text field manually in code
 ' INFO: VisibleChanged event for form will nested fire immediately on .Show or .Hide
 ' (FIXED) Store/Display created/modified dates including time part?  GMT?
 ' Decide on GMT store/display/offset for create/modify dates
-' On edit detect if any actual changes.
+' On edit detect if any actual changes / show actual changes
 ' implement priority to top
 ' (FIXED) redo storage for all item fields / check on read for < and >
 ' full protection against binary/line break chars when in text files
@@ -82,18 +89,16 @@
 ' tab attempt in text boxes actually goes to next field
 ' (FIXED/MERGED) implement date editor, and include in sort criteria
 ' (FIXED) have to solve logic/event issue with (close minimode)(open main)(force add)(add self closes)(close main)(reopen minimode)
-' Need to figure out how to pass sort comparer function to Sort method (ICompare implement vs Lambda vs AddressOf vs ...)
+' (DONE) Need to figure out how to pass sort comparer function to Sort method (ICompare implement vs Lambda vs AddressOf vs ...)
 ' Compartmentalizing item structure outside of Form1 / global variable block etc.
-' Review practice of ID'ing node type by node number instead of node type stored in record
+' (DONE) Review practice of ID'ing node type by node number instead of node type stored in record
 ' Implement checkboxes including transactions
 ' Consistent prefixes for data types + g/m
-' Danger/bad practice of DoEvents in logging
-' Eliminate all compile warnings
+' Danger/bad practice of DoEvents in logging? (research)
 ' reserved words to avoid: Parent, Validate
-' Ensure all significant changes to tree/data are done as transactions
-' Strip or comment code that uses embedded node types / code based on known node numbers
+' (DONE) Ensure all significant changes to tree/data are done as transactions
+' (DONE?) Strip or comment code that uses embedded node types / code based on known node numbers
 ' Audit mainline code for things that are simplified/altered/omitted e.g. new mini mode form
-' More sanity checking of DB and TRN consistency, autocheck and autosave on an idle timer?
 Public Class Form1
 
     Dim gdtNull As Date = DateValue("01/01/1900")
@@ -132,7 +137,7 @@ Public Class Form1
         Dim strStartupOptions As String = ""
         Dim strLastTransaction As String = ""
         Dim intNdx As Integer
-
+        Dim intWantToAutoValidateAfterThisManyChanges As Integer = -1
         ' Testing block for Encode/Decode
         'Dim strTest As String
         'strTest = "Hello World"
@@ -188,6 +193,14 @@ Public Class Form1
                     gstrCurrentPIMFileBasename = strBufferElements(1)
                 Case "OnStartup".ToUpper
                     strStartupOptions = strBufferElements(1)
+                Case "AutoValidateEvery".ToUpper
+                    If (Not IsNumeric(strBufferElements(1))) Then
+                        Throw New Exception("AutoValidateEvery value must be a positive integer")
+                    End If
+                    intWantToAutoValidateAfterThisManyChanges = Convert.ToInt32(strBufferElements(1))
+                    If (intWantToAutoValidateAfterThisManyChanges < 1) Then
+                        Throw New Exception("AutoValidateEvery value must be a positive integer")
+                    End If
                 Case Else
                     Throw New Exception("Unknown name tag in Config.txt")
             End Select
@@ -239,6 +252,7 @@ Public Class Form1
         gActual.mstrContentDirectory = gstrContentDirectory
         gActual.mstrCurrentDBFileName = gstrCurrentContentFile
         gActual.mstrCurrentPIMFileBasename = gstrCurrentPIMFileBasename
+        gActual.mintValidateAfterEveryThisManyChanges = intWantToAutoValidateAfterThisManyChanges
         gActual.L = L
 
         If (Not FileIO.FileSystem.FileExists(gstrCurrentContentFile)) Then

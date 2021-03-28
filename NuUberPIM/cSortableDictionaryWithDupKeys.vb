@@ -25,7 +25,7 @@
             ' key order/mapping: (date of event 0..7)(bump to top date 8..15)(pri 16..18)(node num 19..26)
             sortedKeys.Sort(Function(s1 As String, s2 As String) As Integer
                                 ' result -1 s1 before s2, 1 s2 before s1, 0 no difference
-                                Dim intResult As Integer
+                                Dim intResult As Integer = 0
                                 Dim t1, t2 As String
                                 Dim d1, d2 As Date
                                 Dim i1, i2 As Integer
@@ -58,7 +58,7 @@
                                     d2 = DateValue(t2.Substring(4, 2) & "/" & t2.Substring(6, 2) & "/" & t2.Substring(0, 4))
                                     intDOEResult = Date.Compare(d1, d2) 'if d1<d2 returns -1
                                 End If
-                                If (True) Then
+                                If (intDOEResult = 0) Then
                                     t1 = s1.Substring(8, 8)
                                     t2 = s2.Substring(8, 8)
                                     If ((t1 = "________") And (t2 <> "________")) Then
