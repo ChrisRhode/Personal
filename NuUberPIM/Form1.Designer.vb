@@ -35,6 +35,7 @@ Partial Class Form1
         Me.btnEdit = New System.Windows.Forms.Button()
         Me.btnMiniMode = New System.Windows.Forms.Button()
         Me.btnMove = New System.Windows.Forms.Button()
+        Me.btnCheck = New System.Windows.Forms.Button()
         Me.SuspendLayout()
         '
         'tvMain
@@ -168,11 +169,22 @@ Partial Class Form1
         Me.btnMove.Text = "Move"
         Me.btnMove.UseVisualStyleBackColor = True
         '
+        'btnCheck
+        '
+        Me.btnCheck.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
+        Me.btnCheck.Location = New System.Drawing.Point(668, 296)
+        Me.btnCheck.Name = "btnCheck"
+        Me.btnCheck.Size = New System.Drawing.Size(75, 32)
+        Me.btnCheck.TabIndex = 13
+        Me.btnCheck.Text = "Check"
+        Me.btnCheck.UseVisualStyleBackColor = True
+        '
         'Form1
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(8.0!, 16.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
         Me.ClientSize = New System.Drawing.Size(927, 525)
+        Me.Controls.Add(Me.btnCheck)
         Me.Controls.Add(Me.btnMove)
         Me.Controls.Add(Me.btnMiniMode)
         Me.Controls.Add(Me.btnEdit)
@@ -206,4 +218,5 @@ Partial Class Form1
     Friend WithEvents btnEdit As Button
     Friend WithEvents btnMiniMode As Button
     Friend WithEvents btnMove As Button
+    Friend WithEvents btnCheck As Button
 End Class

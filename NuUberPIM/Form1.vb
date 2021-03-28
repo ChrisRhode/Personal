@@ -1,8 +1,10 @@
 ﻿Imports System.ComponentModel
+' (DONE) Fix for validation after initial load only
 ' (DONE) after simple move, select node that was moved not where it was moved to?
 ' (FIXED) priority algorithm ... was not handling priority corrrectly in several cases
 ' Apparently, adding an expanded node to a node triggers after expand??  curious ... problematical?  look at later
 ' ReSort is done on Add or Edit ... but not on initial build, if we do it better, can avoid needing to re-sort so much
+' (DONE) Should there be a tree sanity validator that can be called on demand?
 ' (DONE) need to walk through again, node expand and after selects that happen towards and moving a node
 ' .. seems like excessive chatter, resort/redisplay node is part of it, get nested select/expand events
 ' .... fixed sudden breakage of move due to nested select/expand events, expand undid ignore events
@@ -692,4 +694,11 @@ Public Class Form1
         Throw New Exception("AutoRepair did not complete properly")
     End Sub
 
+    Private Sub btnCheck_Click(sender As Object, e As EventArgs) Handles btnCheck.Click
+        If (gActual.ValidateTree(tvMain, gActual.mintNumberOfNodesInTree, gActual.mintLastNodeNbrUsed)) Then
+            L.WriteToLog("Validation passed")
+        Else
+            L.WriteToLog("Validation failed")
+        End If
+    End Sub
 End Class

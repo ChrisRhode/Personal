@@ -1,5 +1,7 @@
 ﻿Public Class cTreeManipulator
 
+    Private gboolValidateAfterEveryChange As Boolean = True
+    Private gboolValidationBypass As Boolean = True
     Private gdtNull As Date = DateValue("01/01/1900")
 
     Public mTree As TreeView = Nothing
@@ -45,6 +47,11 @@
 
     Public Sub ApplyNewTransaction(ft As System.IO.StreamWriter, tree As TreeView, strTransactionName As String, theItem As cToDoItem.sItemInfo, theNode As TreeNode)
         ApplyTransaction(ft, tree, strTransactionName, theItem, theNode, Nothing)
+        If (gboolValidateAfterEveryChange And Not (gboolValidationBypass)) Then
+            If (Not ValidateTree(tree, mintNumberOfNodesInTree, mintLastNodeNbrUsed)) Then
+                MessageBox.Show("Warning!  Tree fails validation after transaction!")
+            End If
+        End If
     End Sub
 
     Public Sub ApplyTransactionFromLog(tree As TreeView, strTransactionName As String, strAttributeElements As String())
@@ -382,6 +389,11 @@
             Throw New Exception("Number of nodes in database is incorrect")
         End If
         mintNumberOfNodesInTree = intNumberOfNodesEncountered
+        '
+        gboolValidationBypass = False
+        If (Not ValidateTree(mTree, mintNumberOfNodesInTree, mintLastNodeNbrUsed)) Then
+            MessageBox.Show("Warning! Validation failed after load!")
+        End If
     End Sub
 
     ' saves the tree in this manipulator instance to the disk
@@ -393,6 +405,10 @@
         Dim strElements() As String
 
         CheckReady()
+        If (Not ValidateTree(mTree, mintNumberOfNodesInTree, mintLastNodeNbrUsed)) Then
+            MessageBox.Show("Current tree structure did not pass validation, save cannot be done")
+            Exit Sub
+        End If
         ' if not the first version, verify the current database file is gIntLastVersionWritten
         '     then make a backup copy of it
         If (mintLoadedDBVersion > 0) Then
@@ -452,6 +468,48 @@
         End If
     End Sub
 
+    Function ValidateTree(tree As TreeView, intExpectedNumberOfNodes As Integer, intExpectedMaxNodeNbr As Integer) As Boolean
+        Dim intValidateNodeCtr As Integer = 0
+        Dim intValidateMaxNodeNbr As Integer = -1
+        Dim boolResult As Boolean
+
+        boolResult = ValidateHelper(tree.Nodes(0), intValidateNodeCtr, intValidateMaxNodeNbr)
+        If (Not boolResult) Then
+            Return False
+        ElseIf (intValidateNodeCtr <> intExpectedNumberOfNodes) Then
+            Return False
+        ElseIf (intValidateMaxNodeNbr <> intExpectedMaxNodeNbr) Then
+            Return False
+        Else
+            Return True
+        End If
+    End Function
+
+    Function ValidateHelper(n As TreeNode, ByRef intValidateNodeCtr As Integer, ByRef intValidateMaxNodeNbr As Integer) As Boolean
+        Dim thisItem, childItem As cToDoItem.sItemInfo
+        Dim intNdx, intLastNdx As Integer
+        Dim lowerOkay As Boolean
+        intValidateNodeCtr += 1
+        thisItem = n.Tag
+        L.WriteToLog("Checking node " & thisItem.intNodeNbr, True)
+        If (thisItem.intNodeNbr > intValidateMaxNodeNbr) Then
+            intValidateMaxNodeNbr = thisItem.intNodeNbr
+        End If
+        intLastNdx = n.Nodes.Count - 1
+        If (n.Nodes.Count >= 0) Then
+            For intNdx = 0 To intLastNdx
+                childItem = n.Nodes(intNdx).Tag
+                If (childItem.intParentNodeNbr <> thisItem.intNodeNbr) Then
+                    Return False
+                End If
+                lowerOkay = ValidateHelper(n.Nodes(intNdx), intValidateNodeCtr, intValidateMaxNodeNbr)
+                If (Not lowerOkay) Then
+                    Return False
+                End If
+            Next
+        End If
+        Return True
+    End Function
     Public Sub ResortAndRedisplayParent(tree As TreeView, ofNode As TreeNode)
         Dim parent As TreeNode
         Dim item As cToDoItem.sItemInfo
