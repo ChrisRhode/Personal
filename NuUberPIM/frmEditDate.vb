@@ -1,4 +1,7 @@
-﻿Public Class frmEditDate
+﻿Option Explicit On
+Option Strict On
+
+Public Class frmEditDate
 
     Public gdt As Date
     Public gboolCancel As Boolean = False

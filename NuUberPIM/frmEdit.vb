@@ -1,4 +1,6 @@
-﻿Public Class frmEdit
+﻿Option Explicit On
+Option Strict On
+Public Class frmEdit
     Public sOriginal As New cToDoItem.sItemInfo
     Public sNew As New cToDoItem.sItemInfo
     Public gboolDidCancel As Boolean = False
@@ -30,7 +32,7 @@
     Sub DisplayNew()
         tbText.Text = sNew.strText
         tbNotes.Text = sNew.strNotes
-        tbPri.Text = Convert.ToInt32(sNew.intPriority)
+        tbPri.Text = sNew.intPriority.ToString
         tbDOE.Text = U.FormatDateAsText(sNew.dtDateOfEvent)
         tbBTTD.Text = U.FormatDateAsText(sNew.dtDateOfBumpToTop)
         tbCreated.Text = U.FormatDateTimeAsText(sNew.dtCreated)

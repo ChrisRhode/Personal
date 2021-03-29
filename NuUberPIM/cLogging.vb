@@ -1,4 +1,6 @@
-﻿Public Class cLogging
+﻿Option Explicit On
+Option Strict On
+Public Class cLogging
     Dim mtbLog As TextBox
     Dim intCtr As Integer = 0
     Dim boolShowDebugs As Boolean = False

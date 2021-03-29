@@ -1,4 +1,6 @@
-﻿Public Class cUtility
+﻿Option Explicit On
+Option Strict On
+Public Class cUtility
 
     Dim mdtNull As Date = DateValue("01/01/1900")
 

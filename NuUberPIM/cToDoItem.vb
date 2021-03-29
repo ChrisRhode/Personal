@@ -1,4 +1,6 @@
-﻿Public Class cToDoItem
+﻿Option Explicit On
+Option Strict On
+Public Class cToDoItem
 
     Private gdtNull As Date = DateValue("01/01/1900")
 
@@ -41,8 +43,8 @@
         Dim intNodeCurrentParentNbr As Integer
         Dim theCurrentParent As TreeNode
 
-        theNodeItem = theNode.Tag
-        theToParentItem = toParent.Tag
+        theNodeItem = CType(theNode.Tag, cToDoItem.sItemInfo)
+        theToParentItem = CType(toParent.Tag, cToDoItem.sItemInfo)
 
         intNodeCurrentParentNbr = theNodeItem.intParentNodeNbr
         If (intNodeCurrentParentNbr > -1) Then
@@ -125,7 +127,7 @@
         Dim n As TreeNode
         Dim item_check As sItemInfo
 
-        item_check = tv.Nodes(0).Tag
+        item_check = CType(tv.Nodes(0).Tag, cToDoItem.sItemInfo)
         If (item_check.intNodeNbr <> 0) Or (item_check.intParentNodeNbr <> -1) Then
             Throw New Exception("Invalid hidden root")
         End If
@@ -141,7 +143,7 @@
         Dim intLastNdx As Integer
         Dim rn As TreeNode
 
-        item = n.Tag
+        item = CType(n.Tag, cToDoItem.sItemInfo)
         If (item.intNodeNbr = intNodeNbrToFind) Then
             Return n
         Else
@@ -163,7 +165,7 @@
         If (IsNothing(n)) Then
             Return "(nil)"
         Else
-            item = n.Tag
+            item = CType(n.Tag, cToDoItem.sItemInfo)
             Return item.strText
         End If
     End Function

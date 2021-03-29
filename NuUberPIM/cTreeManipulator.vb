@@ -1,4 +1,6 @@
-﻿Public Class cTreeManipulator
+﻿Option Explicit On
+Option Strict On
+Public Class cTreeManipulator
 
     'Private gboolValidateAfterEveryChange As Boolean = True
 
@@ -142,7 +144,7 @@
                 End If
                 ' Add the new node to its designated parent
                 pNode = TODO.FindNodeByNodeNbr(tree, pItem.intParentNodeNbr)
-                localItem = pNode.Tag
+                localItem = CType(pNode.Tag, cToDoItem.sItemInfo)
 
                 aNode = New TreeNode
                 aNode.Text = TODO.GetDisplayTextForItem(pItem)
@@ -224,13 +226,13 @@
                     ' also write the transaction to the transaction log
                     pItem = theItem
                     pNode = theNode
-                    localItem = pNode.Tag
+                    localItem = CType(pNode.Tag, cToDoItem.sItemInfo)
                     ft.WriteLine("<Move " & pItem.intNodeNbr & ":" & localItem.intNodeNbr & ">")
                     ft.Flush()
                 Else
                     ' set up pItem and/or pNode based on strAttributeElements() only
                     aNode = TODO.FindNodeByNodeNbr(tree, Convert.ToInt32(strAttributeElements(0)))
-                    pItem = aNode.Tag
+                    pItem = CType(aNode.Tag, cToDoItem.sItemInfo)
                     pNode = TODO.FindNodeByNodeNbr(tree, Convert.ToInt32(strAttributeElements(1)))
                 End If
                 ' make node-item in pItem now be child of pNode
@@ -253,7 +255,7 @@
                 If (Not IsNothing(ft)) Then
                     boolIsChange = True
                     ' provide human understandable description of action to log
-                    localItem = pNode.Tag
+                    localItem = CType(pNode.Tag, cToDoItem.sItemInfo)
                     ' *** decoding?
                     L.WriteToLog("Moved (" & pItem.strText & ") to (" & localItem.strText & ")")
                 End If
@@ -269,7 +271,7 @@
                 Else
                     ' set up pItem and/or pNode based on strAttributeElements() only
                     pNode = TODO.FindNodeByNodeNbr(tree, Convert.ToInt32(strAttributeElements(0)))
-                    pItem = pNode.Tag
+                    pItem = CType(pNode.Tag, cToDoItem.sItemInfo)
                 End If
                 pItem.intPriority += 1
                 pNode.Text = TODO.GetDisplayTextForItem(pItem)  'because priority is included in text
@@ -292,7 +294,7 @@
                 Else
                     ' set up pItem and/or pNode based on strAttributeElements() only
                     pNode = TODO.FindNodeByNodeNbr(tree, Convert.ToInt32(strAttributeElements(0)))
-                    pItem = pNode.Tag
+                    pItem = CType(pNode.Tag, cToDoItem.sItemInfo)
                 End If
                 pItem.intPriority -= 1
                 pNode.Text = TODO.GetDisplayTextForItem(pItem)  'because priority is included in text
@@ -378,7 +380,7 @@
             item = TODO.DecodeItem(strBuffer)
             If (item.intNodeNbr = 0) Then
                 ' copy the create date to our manually created node 0
-                item2 = rootnode.Tag
+                item2 = CType(rootnode.Tag, cToDoItem.sItemInfo)
                 item2.dtCreated = item.dtCreated
                 rootnode.Tag = item2
                 Continue While
@@ -477,7 +479,7 @@
         Dim intNdx As Integer
         Dim intLastNdx As Integer
 
-        item = n.Tag
+        item = CType(n.Tag, cToDoItem.sItemInfo)
         strOutput = "<" & TODO.EncodeItem(item) & ">"
         gfNewContentFile.WriteLine(strOutput)
         mintWriteNodeCounter += 1
@@ -514,7 +516,7 @@
         Dim intNdx, intLastNdx As Integer
         Dim lowerOkay As Boolean
         intValidateNodeCtr += 1
-        thisItem = n.Tag
+        thisItem = CType(n.Tag, cToDoItem.sItemInfo)
         L.WriteToLog("Checking node " & thisItem.intNodeNbr, True)
         If (thisItem.intNodeNbr > intValidateMaxNodeNbr) Then
             intValidateMaxNodeNbr = thisItem.intNodeNbr
@@ -522,7 +524,7 @@
         intLastNdx = n.Nodes.Count - 1
         If (n.Nodes.Count >= 0) Then
             For intNdx = 0 To intLastNdx
-                childItem = n.Nodes(intNdx).Tag
+                childItem = CType(n.Nodes(intNdx).Tag, cToDoItem.sItemInfo)
                 If (childItem.intParentNodeNbr <> thisItem.intNodeNbr) Then
                     Return False
                 End If
@@ -551,7 +553,7 @@
         'Dim intCurrentNodeNbr As Integer
         Dim rememberSelectedNode As TreeNode
 
-        item = ofNode.Tag
+        item = CType(ofNode.Tag, cToDoItem.sItemInfo)
         L.WriteToLog("In ReSort(): parent of :" & item.strText, True)
         ' 03/24/2021 due to odd behavior when a node's position changes due to sort order change
         ' remember currently selected node if any
@@ -576,7 +578,7 @@
 
         intLastNdx = parent.Nodes.Count - 1
         For intNdx = 0 To intLastNdx
-            item = parent.Nodes(intNdx).Tag
+            item = CType(parent.Nodes(intNdx).Tag, cToDoItem.sItemInfo)
             strKey = ""
 
             If (item.dtDateOfEvent <> gdtNull) Then

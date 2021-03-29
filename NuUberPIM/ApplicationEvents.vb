@@ -1,4 +1,7 @@
-﻿Imports Microsoft.VisualBasic.ApplicationServices
+﻿Option Explicit On
+Option Strict On
+
+Imports Microsoft.VisualBasic.ApplicationServices
 
 Namespace My
     ' The following events are available for MyApplication:

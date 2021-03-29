@@ -1,4 +1,6 @@
-﻿Public Class frmAdd
+﻿Option Explicit On
+Option Strict On
+Public Class frmAdd
 
     Public tv As TreeView
     Public gBoolCancel As Boolean = True
@@ -23,7 +25,7 @@
         Dim intNdx As Integer
         Dim intLastNdx As Integer
 
-        item = n.Tag
+        item = CType(n.Tag, cToDoItem.sItemInfo)
         If (item.intNodeNbr = 3) Then
             gboolInTrashTree = True
         End If

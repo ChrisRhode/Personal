@@ -1,4 +1,6 @@
-﻿Public Class frmTrnLogMgmt
+﻿Option Explicit On
+Option Strict On
+Public Class frmTrnLogMgmt
 
     Public gtvViewMain As TreeView
     Public gstrTrnLogFN As String
@@ -227,7 +229,7 @@
         Dim intLastNdx As Integer
         Dim strEncodedItem As String
 
-        item = n.Tag
+        item = CType(n.Tag, cToDoItem.sItemInfo)
         strEncodedItem = TODO.EncodeItem(item)
         d.Add(item.intNodeNbr, strEncodedItem)
 

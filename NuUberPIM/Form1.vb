@@ -1,4 +1,7 @@
-﻿Imports System.ComponentModel
+﻿Option Explicit On
+Option Strict On
+
+Imports System.ComponentModel
 ' On any release build, eliminate any code warnings
 ' AutoSave after N changes? (if TRN works well this should not be needed, try very log TRN recovery)
 ' Clean up transaction functions form
@@ -151,6 +154,7 @@ Public Class Form1
         'strTest = DecodeFromAvoid(strTest)
         ' End testing block
 
+        Me.Text = "NuUberPim v" & Reflection.Assembly.GetExecutingAssembly.GetName().Version.ToString
         L = New cLogging(tbLog)
         ' *** Currently assumes config file is in bin directory of app, not MyDocuments,AppData or elsewhere.
         ' *** Currently assumes everything in the file is a name=value line
@@ -307,7 +311,7 @@ Public Class Form1
 
         If (strQuickAdd <> "") Then
             parent = TODO.FindNodeByNodeNbr(tvMain, 1)
-            parentItem = parent.Tag
+            parentItem = CType(parent.Tag, cToDoItem.sItemInfo)
         Else
             parent = tvMain.SelectedNode
             ' *** "x Is Nothing" vs IsNothing(x)
@@ -316,7 +320,7 @@ Public Class Form1
                 Exit Sub
             End If
             ' cannot add manually to trash or root nodes
-            parentItem = parent.Tag
+            parentItem = CType(parent.Tag, cToDoItem.sItemInfo)
             If (parentItem.intNodeNbr = 0) Or (parentItem.intNodeNbr = 3) Then
                 MessageBox.Show("You cannot manually add a node here")
                 Exit Sub
@@ -367,7 +371,7 @@ Public Class Form1
             MessageBox.Show("You must select a node to edit first")
             Exit Sub
         End If
-        currentItem = currentNode.Tag
+        currentItem = CType(currentNode.Tag, cToDoItem.sItemInfo)
         If (currentItem.intNodeNbr <= 3) Then
             MessageBox.Show("You cannot edit this node")
             Exit Sub
@@ -389,7 +393,7 @@ Public Class Form1
         If (gNodeToMove Is Nothing) Then
             MessageBox.Show("Must select node to move first")
         End If
-        localItem = gNodeToMove.Tag
+        localItem = CType(gNodeToMove.Tag, cToDoItem.sItemInfo)
         If (localItem.intNodeNbr <= 3) Then
             MessageBox.Show("You cannot move this node")
             gNodeToMove = Nothing
@@ -409,7 +413,7 @@ Public Class Form1
             MessageBox.Show("Must select destination parent node first")
             Exit Sub
         End If
-        localItem = gMoveToParent.Tag
+        localItem = CType(gMoveToParent.Tag, cToDoItem.sItemInfo)
         ' *** ensure Exit Sub done on error cases ... in fact I missed the one above
         If (localItem.intNodeNbr = 0) Or (localItem.intNodeNbr = 3) Then
             MessageBox.Show("You cannot move to this node")
@@ -434,7 +438,7 @@ Public Class Form1
             Exit Sub
         End If
         ' multimove end
-        localItem = gMoveToParent.Tag
+        localItem = CType(gMoveToParent.Tag, cToDoItem.sItemInfo)
         L.WriteToLog("End moving items to: " & localItem.strText)
         gMoveToParent = Nothing
         btnStartMultiMoveHere.Enabled = True
@@ -452,7 +456,7 @@ Public Class Form1
         If (aNode Is Nothing) Then
             MessageBox.Show("Must select node to delete first")
         End If
-        localItem = aNode.Tag
+        localItem = CType(aNode.Tag, cToDoItem.sItemInfo)
         If (localItem.intNodeNbr <= 3) Then
             MessageBox.Show("You cannot delete this node")
             Exit Sub
@@ -468,7 +472,7 @@ Public Class Form1
             MessageBox.Show("You must select a node first")
             Exit Sub
         End If
-        item = aNode.Tag
+        item = CType(aNode.Tag, cToDoItem.sItemInfo)
         If (item.intNodeNbr <= 3) Then
             MessageBox.Show("You cannot alter this node")
             Exit Sub
@@ -485,7 +489,7 @@ Public Class Form1
             MessageBox.Show("You must select a node first")
             Exit Sub
         End If
-        item = aNode.Tag
+        item = CType(aNode.Tag, cToDoItem.sItemInfo)
         If (item.intNodeNbr <= 3) Then
             MessageBox.Show("You cannot alter this node")
             Exit Sub
@@ -564,7 +568,7 @@ Public Class Form1
             gBoolBypassEvents = True
             '' now that bypass is on, deselect the node now so it won't pass through here 
             'tvMain.SelectedNode = Nothing
-            currNodeItem = currNode.Tag
+            currNodeItem = CType(currNode.Tag, cToDoItem.sItemInfo)
             ' *** perform checks here for illegal moves
             ' *** need to implement: do not allow a parent to move to a child
             If (currNodeItem.intNodeNbr <= 3) Then
@@ -578,12 +582,12 @@ Public Class Form1
             gBoolBypassEvents = boolRememberBypass
         ElseIf (Not (gNodeToMove Is Nothing)) Then
             ' we've selected node to move to ... set up for move gNodeToMove to currNode
-            tempItem = currNode.Tag
+            tempItem = CType(currNode.Tag, cToDoItem.sItemInfo)
             If (tempItem.intNodeNbr = 0) Or (tempItem.intNodeNbr = 3) Then
                 MessageBox.Show("You cannot move to this node")
                 Exit Sub
             End If
-            tempItem = gNodeToMove.Tag
+            tempItem = CType(gNodeToMove.Tag, cToDoItem.sItemInfo)
             ' need to bypass this routine now until after move, because move triggers re-sort which will come back to us
             L.WriteToLog("AfterSelect: Bypass enable", True)
             gBoolBypassEvents = True
@@ -618,7 +622,7 @@ Public Class Form1
 
         node = e.Node
         nodeWeExpand = node
-        info = node.Tag
+        info = CType(node.Tag, cToDoItem.sItemInfo)
         L.WriteToLog("After expand: " & TODO.DebugGetNodeDescr(node), True)
         If (info.intNodeNbr <> 0) And (info.intNodeNbr <> 1) And (info.intNodeNbr <> 3) Then
             If (node.Nodes.Count > 0) Then

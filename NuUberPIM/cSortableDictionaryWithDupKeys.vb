@@ -1,4 +1,6 @@
-﻿Public Class cSortableDictionaryWithDupKeys
+﻿Option Explicit On
+Option Strict On
+Public Class cSortableDictionaryWithDupKeys
 
     Dim dict As New Dictionary(Of String, String)
     Dim sortedKeys As List(Of String)
@@ -131,7 +133,7 @@
 
     End Sub
 
-    Public ReadOnly Property SortedCount
+    Public ReadOnly Property SortedCount As Integer
         Get
             Return sortedKeys.Count
         End Get

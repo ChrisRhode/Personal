@@ -1,4 +1,6 @@
-﻿Public Class frmMini
+﻿Option Explicit On
+Option Strict On
+Public Class frmMini
     Private Sub btnAdd_Click(sender As Object, e As EventArgs) Handles btnAdd.Click
         'Quick Add
         Dim strQuickAddText As String
