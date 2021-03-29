@@ -13,6 +13,7 @@ Imports System.ComponentModel
 ' .. ready to work on rollback from start of previous version / can do an undo also
 ' .. also auto verify and save when idle or after N operations (option)
 ' .. Exercise TRN log base + TRN so far = current
+' number the transaction records so can record rollbacks?  Silly if allowing manual edits to fix?
 ' using new change counter, save new version on close only if there are changes since last save
 ' do we need/want form indicator for resort,validation etc in progress?
 ' work on preventing illegal moves
@@ -20,84 +21,93 @@ Imports System.ComponentModel
 ' (DONE) after simple move, select node that was moved not where it was moved to?
 ' (FIXED) priority algorithm ... was not handling priority corrrectly in several cases
 ' ReSort is done on Add or Edit ... but not on initial build, if we do it better, can avoid needing to re-sort so much
+' .. appropriate use of BeginUpdate and EndUpdate
 ' (DONE) Should there be a tree sanity validator that can be called on demand?
 ' (DONE) need to walk through again, node expand and after selects that happen towards and moving a node
+' (DONE) Clean up event sequence / bypass of events during move / DoEvents
 ' Further testing and research on events
+' .. Danger/bad practice of DoEvents in logging? (research)
 ' .. Apparently, adding an expanded node to a node triggers after expand??  curious ... problematical?  look at later
 ' .. seems like excessive chatter, resort/redisplay node is part of it, get nested select/expand events
 ' .... fixed sudden breakage of move due to nested select/expand events, expand undid ignore events
 ' ...... this will become a problem if other event procs want to ignore events
 ' ...... go through expand, resort, select/unselect chains
 ' ..(FIXED - AfterSelect nests during sort after move)(FIXED - had dup node from previous bug) 
+' INFO: Load event fires on Show or ShowDialog, not on instantiation
+' INFO: TextChanged does not fire if you set the text field manually in code
+' INFO: VisibleChanged event for form will nested fire immediately on .Show or .Hide
 ' set up "related to" and maybe "dependent on" (will be some work!)
-' Two options set at start of every source file
-' Magic to display version # of app
-' Test encode/decode with legitimate unicode (emdash family)(emoticons as an example)(umlauted chars?)
-'.... use of TextBox may foil this ... e.g emdash is apparently changed to a regular dash
+' (DONE) Two options set at start of every source file
+' (DONE) Magic to display version # of app
 ' Passing nodes by value, but altering their Tag?
+' proper mix of passing nodes or node tags (items) to routines
 ' Passing TreeViews by value?  Or does it do ByRef under the hood?
 ' What defines node a == node b ... text? tag? address/checksum? other?
 ' Make sure on ref to structure vs new structure, and copy of reference vs direct reference
+' .. consistency on New vs not for items ... be sure to set into tag of node
 ' cTreeManipulator should be INSTANCED as either live or copy mode ... New() ... do not pass params to every call
 ' ..Sanity check all trn log class creation/entry, clean up (e.g. should just pass tv on New)
 ' ..should not be passing tree into calls any more, its in the transaction class
-' consistency on New vs not for items ... be sure to set into tag of node
 ' Also heavy testing needed for all operations (disallow and perform)
 ' (DONE) Soon need to be able to use TRN to recover from code crash
 ' (WORKED AROUND) weirdness with EOL on TRNLOG during recovery
 ' look for sanity and extra new version after auto recovery
+' .. appropriate use of verify sanity calls
 ' initial form size weirdness vs in designer
 ' FULL CODE LOGIC CHECK AND REORGANIZE
 ' (DONE) outer exception handler + check file
 ' move things "around" between main, tree manipulator and ToDoItem
 ' (DONE) special protections needed for special nodes
+' Disallow deletes of any child of trash... done?
 ' global and module variables nothing, check if nothing
 ' parameters check to assure nothing
-' proper mix of passing nodes or node tags (items) to routines
 ' (FIXED) TRN file is recreating/overwriting each time ... not good
 ' SelectedNode, always one or can be many?  Assuming exactly one right now e.g. for Edit
+' .. look at the weirdness of actual select auto highlight vs manually clearing/setting it
 ' (FIXED) Move is not being permanent ... probably not refreshing tag in nodes? (no, need to set intParentNbr when moving)
 ' (INVALIDATED) Need to record the node types in the data for sense on special node types to work (node number implies special node for now)
-' Disallow deletes of any child of trash
-' (DONE) Clean up event sequence / bypass of events during move / DoEvents
 ' Double check for ContentFile state before doing backup/rename/write (?)
 ' (FIXED) System.IO.File.OpenText, CreateText, AppendText vs old Open (New vs not)
+' Check that same or similar Save sequence used everywhere
 ' (FIXED) on open existing verify last node number
-' *** after we implement true delete, there will be holes in node numbers (should mostly handle now)
+' After we implement true delete, there will be holes in node numbers (should mostly handle now)
 ' .. once we allow housekeeping of trash, simple "last node seen is max node number created" will not work
-' verify files properly closed where appropriate
+' (DONE) verify files properly closed where appropriate
+' .. double check transition from recovery to close app
 ' Incremental search should not show special nodes (only issue during new file?)
 ' (DONE) Auto expand ToDo and QuickAccess when first child is added
 ' (FIXED) Quick Add + Enhanced Add / allow for other attributes and write to database
 ' (DONE) Add display (done)/sorting (to do) handlers for Dates etc.
 ' (FIXED) ... item with a bump to top of today still comes before an item with a date of event of today
 ' (FIXED/MERGED) Ensure text and notes are converted/protected ... especially control chars like NL,CR,LF
+' .. tab attempt in text boxes actually goes to next field
+' .. double check encode/decode and display as node text or in Edit
+' .. full protection against binary/line break chars when in text files
+' .. Test encode/decode with legitimate unicode (emdash family)(emoticons as an example)(umlauted chars?)
+'.... use of TextBox may foil this ... e.g emdash is apparently changed to a regular dash
 ' (FIXED) Any change to a node content (not position) should change modify date
-' Do not change modify date for certain types of changes (?)
+' .. Do not change modify date for certain types of changes (?)
 ' (FIXED) compact storage of all node attributes
-' *** where is intParentNodeNbr set/looked at
-' All forms: Form closing block or act as Ok/Cancel (on main form can lose data if close without save)
+' Where is intParentNodeNbr set/looked at ... verify appropriate use everywhere
+' All forms: Form closing block or act as Ok/Cancel (FIXED: on main form can lose data if close without save)
 ' (FIXED) Current brain freeze: add then extended edit ... node with values is not created yet
-' INFO: Load event fires on Show or ShowDialog, not on instantiation
-' INFO: TextChanged does not fire if you set the text field manually in code
-' INFO: VisibleChanged event for form will nested fire immediately on .Show or .Hide
 ' (FIXED) Store/Display created/modified dates including time part?  GMT?
-' Decide on GMT store/display/offset for create/modify dates
+' .. Decide on GMT store/display/offset for create/modify dates
 ' On edit detect if any actual changes / show actual changes
 ' implement priority to top
+' implement show all dated items / all prioritized items regardless of location (warn on load?)
+' implement find ... two modes?
 ' (FIXED) redo storage for all item fields / check on read for < and >
-' full protection against binary/line break chars when in text files
 ' (FIXED) store gdtnull for dates as null string
 ' (FIXED) check sanity on load for -1 node, global last node number not incremented (node nbr is -1)
-' tab attempt in text boxes actually goes to next field
 ' (FIXED/MERGED) implement date editor, and include in sort criteria
+' .. saw a case where it stored/displayed time in addition to date / fully handle day included or not
 ' (FIXED) have to solve logic/event issue with (close minimode)(open main)(force add)(add self closes)(close main)(reopen minimode)
 ' (DONE) Need to figure out how to pass sort comparer function to Sort method (ICompare implement vs Lambda vs AddressOf vs ...)
 ' Compartmentalizing item structure outside of Form1 / global variable block etc.
 ' (DONE) Review practice of ID'ing node type by node number instead of node type stored in record
 ' Implement checkboxes including transactions
 ' Consistent prefixes for data types + g/m
-' Danger/bad practice of DoEvents in logging? (research)
 ' reserved words to avoid: Parent, Validate
 ' (DONE) Ensure all significant changes to tree/data are done as transactions
 ' (DONE?) Strip or comment code that uses embedded node types / code based on known node numbers
