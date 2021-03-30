@@ -391,6 +391,7 @@ Public Class Form1
         fEdit.sOriginal = currentItem
         fEdit.ShowDialog()
         If (Not fEdit.gboolDidCancel) Then
+            L.WriteToLog(TODO.GetDiffDescr(currentItem, fEdit.sNew))
             gActual.ApplyNewTransaction(gfTransactionFile, tvMain, "Edit", fEdit.sNew, Nothing)
         End If
     End Sub

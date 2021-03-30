@@ -162,11 +162,40 @@ Public Class cToDoItem
 
     Public Function DebugGetNodeDescr(n As TreeNode) As String
         Dim item As cToDoItem.sItemInfo
+
         If (IsNothing(n)) Then
             Return "(nil)"
         Else
             item = CType(n.Tag, cToDoItem.sItemInfo)
             Return item.strText
         End If
+    End Function
+
+    Public Function GetDiffDescr(itemOld As sItemInfo, itemNew As sItemInfo) As String
+        Dim strDescr As String = ""
+
+        If (itemOld.strText <> itemNew.strText) Then
+            strDescr &= "Text changed" & vbCrLf & "  Old:" & itemOld.strText & vbCrLf & "  New:" & itemNew.strText & vbCrLf
+        End If
+        If (itemOld.strNotes <> itemNew.strNotes) Then
+            strDescr &= "Notes changed" & vbCrLf
+        End If
+        If (itemOld.dtDateOfEvent <> itemNew.dtDateOfEvent) Then
+            strDescr &= "Date of event changed" & vbCrLf & "  Old:" & UGBL.FormatDateAsText(itemOld.dtDateOfEvent) & vbCrLf & "  New:" & UGBL.FormatDateAsText(itemNew.dtDateOfEvent) & vbCrLf
+        End If
+        If (itemOld.dtDateOfBumpToTop <> itemNew.dtDateOfBumpToTop) Then
+            strDescr &= "Bump To Top Date changed" & vbCrLf & "  Old:" & UGBL.FormatDateAsText(itemOld.dtDateOfBumpToTop) & vbCrLf & "  New:" & UGBL.FormatDateAsText(itemNew.dtDateOfBumpToTop) & vbCrLf
+        End If
+        If (itemOld.intPriority <> itemNew.intPriority) Then
+            strDescr &= "Priority changed" & vbCrLf & "  Old:" & itemOld.intPriority & vbCrLf & "  New:" & itemNew.intPriority & vbCrLf
+        End If
+
+        If (strDescr = "") Then
+            strDescr = "No differences"
+        Else
+            strDescr = strDescr.Substring(0, strDescr.Length - 2)
+        End If
+
+        Return strDescr
     End Function
 End Class
