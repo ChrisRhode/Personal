@@ -16,6 +16,7 @@ Public Class cToDoItem
         Dim dtDateOfBumpToTop As Date
         Dim intPriority As Integer
         Dim isChecked As Boolean
+        Dim strChildOrder As String
     End Structure
 
     Public Function CreateNewItem(intNewNodeNbr As Integer) As sItemInfo
@@ -32,13 +33,16 @@ Public Class cToDoItem
             .dtDateOfBumpToTop = gdtNull
             .intPriority = 0
             .isChecked = False
+            .strChildOrder = ""
         End With
 
         Return item
     End Function
 
     Public Sub MoveNode(tree As TreeView, theNode As TreeNode, toParent As TreeNode)
+        ' 05/02/2021 modify so if the old parent or the new parent are ordered, it is handled properly
         Dim theNodeItem As sItemInfo
+        Dim theParentNodeItem As sItemInfo
         Dim theToParentItem As sItemInfo
         Dim intNodeCurrentParentNbr As Integer
         Dim theCurrentParent As TreeNode
@@ -50,14 +54,26 @@ Public Class cToDoItem
         If (intNodeCurrentParentNbr > -1) Then
             theCurrentParent = FindNodeByNodeNbr(tree, intNodeCurrentParentNbr)
             theCurrentParent.Nodes.Remove(theNode)
+            theParentNodeItem = CType(theCurrentParent.Tag, cToDoItem.sItemInfo)
+            If (theParentNodeItem.strChildOrder <> "") Then
+                BuildUpdatedOrderListInThisParentNode(theCurrentParent)
+            End If
         End If
         theNodeItem.intParentNodeNbr = theToParentItem.intNodeNbr
         theNode.Tag = theNodeItem
         toParent.Nodes.Add(theNode)
+        theParentNodeItem = CType(toParent.Tag, cToDoItem.sItemInfo)
+        If (theParentNodeItem.strChildOrder <> "") Then
+            BuildUpdatedOrderListInThisParentNode(toParent)
+        End If
     End Sub
 
     Function GetDisplayTextForItem(item As sItemInfo) As String
         Dim strTemp As String = ""
+
+        If (item.strChildOrder <> "") Then
+            strTemp &= "(ORDERED)"
+        End If
 
         If (item.intPriority > 0) Then
             strTemp &= "(PRI:" & item.intPriority & ")"
@@ -92,6 +108,9 @@ Public Class cToDoItem
                 ":" & UGBL.ConvertToCompactDate(.dtDateOfBumpToTop) &
                 ":" & UGBL.ConvertToCompactDateAndTime(.dtCreated) &
                 ":" & UGBL.ConvertToCompactDateAndTime(.dtModified)
+            If (.strChildOrder <> "") Then
+                strOutput &= ":" & .strChildOrder
+            End If
         End With
 
         Return strOutput
@@ -102,7 +121,7 @@ Public Class cToDoItem
         Dim sNew As New sItemInfo
 
         strElements = Split(strItemData, ":")
-        If (UBound(strElements) <> 9) Then
+        If (Not ((UBound(strElements) = 9) Or (UBound(strElements) = 10))) Then
             Throw New Exception("Bad format for item data as string")
         End If
         With sNew
@@ -116,6 +135,11 @@ Public Class cToDoItem
             .dtDateOfBumpToTop = UGBL.ConvertFromCompactDate(strElements(7))
             .dtCreated = UGBL.ConvertFromCompactDateAndTime(strElements(8))
             .dtModified = UGBL.ConvertFromCompactDateAndTime(strElements(9))
+            If (UBound(strElements) = 10) Then
+                .strChildOrder = strElements(10)
+            Else
+                .strChildOrder = ""
+            End If
         End With
 
         Return sNew
@@ -198,4 +222,58 @@ Public Class cToDoItem
 
         Return strDescr
     End Function
+    '
+    '
+    Public Function ParentOf(tv As TreeView, node As TreeNode) As TreeNode
+        Dim item As cToDoItem.sItemInfo
+        Dim parentNode As TreeNode
+        item = CType(node.Tag, cToDoItem.sItemInfo)
+        If (item.intParentNodeNbr <> -1) Then
+            parentNode = FindNodeByNodeNbr(tv, item.intParentNodeNbr)
+        Else
+            parentNode = Nothing '
+        End If
+        Return parentNode
+    End Function
+
+    Public Function isOrdered(node As TreeNode) As Boolean
+        Dim item As cToDoItem.sItemInfo
+        If (IsNothing(node)) Then
+            Return False
+        End If
+        item = CType(node.Tag, cToDoItem.sItemInfo)
+        Return (item.strChildOrder <> "")
+    End Function
+
+    Public Function isAnOrderedChild(tv As TreeView, node As TreeNode) As Boolean
+        ' ** will assume node is valid and has a parent (may only be of concern for special nodes / check here, or before called?)
+        Dim item As cToDoItem.sItemInfo
+        Dim parentNode As TreeNode
+        item = CType(node.Tag, cToDoItem.sItemInfo)
+        parentNode = FindNodeByNodeNbr(tv, item.intParentNodeNbr)
+        item = CType(parentNode.Tag, cToDoItem.sItemInfo)
+        Return (item.strChildOrder <> "")
+    End Function
+
+    Public Sub BuildUpdatedOrderListInThisParentNode(node As TreeNode)
+        Dim item, thisItem As cToDoItem.sItemInfo
+        Dim intNdx, intLastndx As Integer
+        item = CType(node.Tag, cToDoItem.sItemInfo)
+        If (item.strChildOrder = "") Then
+            Throw New Exception("BuildUpdatedOrderListInThisParentNode called for non-ordered node")
+        End If
+        item.strChildOrder = ""
+        intLastndx = node.Nodes.Count - 1
+        For intNdx = 0 To intLastndx
+            thisItem = CType(node.Nodes(intNdx).Tag, cToDoItem.sItemInfo)
+            If (intNdx > 0) Then
+                item.strChildOrder &= ","
+            End If
+            item.strChildOrder &= thisItem.intNodeNbr
+        Next
+        If (item.strChildOrder = "") Then
+            item.strChildOrder = "-1"
+        End If
+        node.Tag = item
+    End Sub
 End Class

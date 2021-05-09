@@ -71,11 +71,10 @@ Public Class cTreeManipulator
 
         Dim localItem As cToDoItem.sItemInfo
         Dim aNode As TreeNode
-
         Dim intANodeNbr As Integer
 
         Dim strAux As String
-        Dim intNdx As Integer
+        Dim intNdx, intLastNdx As Integer
         Dim boolIsChange As Boolean = False
 
         ' *** this is hacky, it's because during TRN log scan for recovery, nothing has been init'd yet
@@ -150,6 +149,9 @@ Public Class cTreeManipulator
                 aNode.Text = TODO.GetDisplayTextForItem(pItem)
                 aNode.Tag = pItem
                 pNode.Nodes.Add(aNode)
+                If (localItem.strChildOrder <> "") Then
+                    TODO.BuildUpdatedOrderListInThisParentNode(pNode)
+                End If
                 ResortAndRedisplayParent(tree, aNode)
                 mintNumberOfNodesInTree += 1
                 If (Not IsNothing(ft)) Then
@@ -304,7 +306,319 @@ Public Class cTreeManipulator
                     boolIsChange = True
                     ' provide human understandable description of action to log
                     L.WriteToLog("Decrease Priority " & pItem.intPriority + 1 & " to " & pItem.intPriority & " (" & pItem.strText & ")")
-
+                End If
+            Case "Toggle"
+                ' if node is normal, switch it to ordered children, else change it back to normal
+                If (Not IsNothing(ft)) Then
+                    ' set up pItem and/or pNode based on theItem/theNode
+                    ' also write the transaction to the transaction log
+                    pItem = theItem
+                    ft.WriteLine("<Toggle " & pItem.intNodeNbr & ">")
+                    ft.Flush()
+                Else
+                    ' set up pItem and/or pNode based on strAttributeElements() only
+                    pNode = TODO.FindNodeByNodeNbr(tree, Convert.ToInt32(strAttributeElements(0)))
+                    pItem = CType(pNode.Tag, cToDoItem.sItemInfo)
+                End If
+                ' do the toggle
+                ' can use intNdx, intlastNdx, localItem and aNode freely; tree points to tree being maniupulated
+                Dim intFirstChildNodeNbr As Integer
+                Dim boolToOrdered As Boolean = False
+                aNode = TODO.FindNodeByNodeNbr(tree, pItem.intNodeNbr)
+                If (pItem.strChildOrder = "") Then
+                    ' make it ordered
+                    boolToOrdered = True
+                    pItem.strChildOrder = "-1"
+                    aNode.Tag = pItem
+                    TODO.BuildUpdatedOrderListInThisParentNode(aNode)
+                Else
+                    ' make it normal
+                    pItem.strChildOrder = ""
+                    aNode.Tag = pItem
+                End If
+                ' fix: have to change display text now
+                aNode.Text = TODO.GetDisplayTextForItem(pItem)  'because priority is included in text
+                '
+                intFirstChildNodeNbr = -1
+                If (aNode.Nodes.Count > 0) Then
+                    localItem = CType(aNode.Nodes(0).Tag, cToDoItem.sItemInfo)
+                    intFirstChildNodeNbr = localItem.intNodeNbr
+                End If
+                If (intFirstChildNodeNbr <> -1) Then
+                    aNode = TODO.FindNodeByNodeNbr(tree, intFirstChildNodeNbr)
+                    ResortAndRedisplayParent(tree, aNode)
+                End If
+                If (Not IsNothing(ft)) Then
+                    boolIsChange = True
+                    ' provide human understandable description of action to log
+                    If (boolToOrdered) Then
+                        L.WriteToLog("Item (" & pItem.strText & ") set to Ordered")
+                    Else
+                        L.WriteToLog("Item (" & pItem.strText & ") set to Normal")
+                    End If
+                End If
+            Case "MoveUp"
+                ' ** do a context diff of this and MoveDown
+                ' item is node to move up within children of parent node
+                If (Not IsNothing(ft)) Then
+                    ' set up pItem and/or pNode based on theItem/theNode
+                    ' also write the transaction to the transaction log
+                    pItem = theItem
+                    pNode = theNode
+                    ft.WriteLine("<MoveUp " & pItem.intNodeNbr & ">")
+                    ft.Flush()
+                Else
+                    ' set up pItem and/or pNode based on strAttributeElements() only
+                    pNode = TODO.FindNodeByNodeNbr(tree, Convert.ToInt32(strAttributeElements(0)))
+                    pItem = CType(pNode.Tag, cToDoItem.sItemInfo)
+                    pNode = TODO.FindNodeByNodeNbr(tree, pItem.intParentNodeNbr)
+                End If
+                ' move node with item pItem up within children of node pNode
+                ' can use intNdx, intlastNdx, localItem and aNode freely; tree points to tree being maniupulate
+                ' make localItem the Tag of the parent
+                localItem = CType(pNode.Tag, cToDoItem.sItemInfo)
+                If (localItem.strChildOrder = "") Then
+                    Throw New Exception("MoveUp called for non-Ordered node")
+                End If
+                Dim strElements() As String
+                Dim intElements() As Integer
+                'Dim intTemp As Integer
+                Dim intNodeNbrToMove As Integer
+                intNodeNbrToMove = pItem.intNodeNbr
+                strElements = Split(localItem.strChildOrder, ",")
+                If (strElements(0) <> "-1") Then
+                    intLastNdx = UBound(strElements)
+                    ReDim intElements(intLastNdx)
+                    For intNdx = 0 To intLastNdx
+                        intElements(intNdx) = Convert.ToInt32(strElements(intNdx))
+                    Next
+                    For intNdx = 0 To intLastNdx
+                        If (intElements(intNdx) = intNodeNbrToMove) Then
+                            If (intNdx > 0) Then
+                                'intTemp = intElements(intNdx - 1)
+                                'intElements(intNdx - 1) = intNodeNbrToMove
+                                ' intElements(intNdx) = intTemp
+                                aNode = TODO.FindNodeByNodeNbr(tree, intNodeNbrToMove)
+                                pNode.Nodes.Remove(aNode)
+                                pNode.Nodes.Insert(intNdx - 1, aNode)
+                            Else
+                                If (Not IsNothing(ft)) Then
+                                    L.WriteToLog("Warning: Item at limit, will not actually be moved")
+                                End If
+                            End If
+                            Exit For
+                        End If
+                    Next
+                    TODO.BuildUpdatedOrderListInThisParentNode(pNode)
+                    aNode = TODO.FindNodeByNodeNbr(tree, intNodeNbrToMove)
+                    tree.SelectedNode = aNode
+                    ResortAndRedisplayParent(tree, aNode)
+                    If (Not IsNothing(ft)) Then
+                        boolIsChange = True
+                        ' provide human understandable description of action to log
+                        L.WriteToLog("Moved item (" & pItem.strText & ") Up")
+                    End If
+                Else
+                    Throw New Exception("MoveUp not possible, parent has no children in order list")
+                End If
+            Case "MoveToTop"
+                ' item is node to move to top within children of parent node
+                If (Not IsNothing(ft)) Then
+                    ' set up pItem and/or pNode based on theItem/theNode
+                    ' also write the transaction to the transaction log
+                    pItem = theItem
+                    pNode = theNode
+                    ft.WriteLine("<MoveToTop " & pItem.intNodeNbr & ">")
+                    ft.Flush()
+                Else
+                    ' set up pItem and/or pNode based on strAttributeElements() only
+                    pNode = TODO.FindNodeByNodeNbr(tree, Convert.ToInt32(strAttributeElements(0)))
+                    pItem = CType(pNode.Tag, cToDoItem.sItemInfo)
+                    pNode = TODO.FindNodeByNodeNbr(tree, pItem.intParentNodeNbr)
+                End If
+                ' move node with item pItem to top within children of node pNode
+                ' can use intNdx, intlastNdx, localItem and aNode freely; tree points to tree being maniupulate
+                ' make localItem the Tag of the parent
+                localItem = CType(pNode.Tag, cToDoItem.sItemInfo)
+                If (localItem.strChildOrder = "") Then
+                    Throw New Exception("MoveToTop called for non-Ordered node")
+                End If
+                Dim strElements() As String
+                Dim intElements() As Integer
+                'Dim intTemp As Integer
+                Dim intNodeNbrToMove As Integer
+                intNodeNbrToMove = pItem.intNodeNbr
+                strElements = Split(localItem.strChildOrder, ",")
+                If (strElements(0) <> "-1") Then
+                    intLastNdx = UBound(strElements)
+                    ReDim intElements(intLastNdx)
+                    For intNdx = 0 To intLastNdx
+                        intElements(intNdx) = Convert.ToInt32(strElements(intNdx))
+                    Next
+                    For intNdx = 0 To intLastNdx
+                        If (intElements(intNdx) = intNodeNbrToMove) Then
+                            If (intNdx > 0) Then
+                                'intTemp = intElements(intNdx - 1)
+                                'intElements(intNdx - 1) = intNodeNbrToMove
+                                ' intElements(intNdx) = intTemp
+                                aNode = TODO.FindNodeByNodeNbr(tree, intNodeNbrToMove)
+                                pNode.Nodes.Remove(aNode)
+                                pNode.Nodes.Insert(0, aNode)
+                            Else
+                                If (Not IsNothing(ft)) Then
+                                    L.WriteToLog("Warning: Item at limit, will not actually be moved")
+                                End If
+                            End If
+                            Exit For
+                        End If
+                    Next
+                    TODO.BuildUpdatedOrderListInThisParentNode(pNode)
+                    aNode = TODO.FindNodeByNodeNbr(tree, intNodeNbrToMove)
+                    tree.SelectedNode = aNode
+                    ResortAndRedisplayParent(tree, aNode)
+                    If (Not IsNothing(ft)) Then
+                        boolIsChange = True
+                        ' provide human understandable description of action to log
+                        L.WriteToLog("Moved item (" & pItem.strText & ") To Top")
+                    End If
+                Else
+                    Throw New Exception("MoveToTop not possible, parent has no children in order list")
+                End If
+            Case "MoveDown"
+                ' ** do a context diff of this and MoveUp
+                ' item is node to move up within children of parent node
+                If (Not IsNothing(ft)) Then
+                    ' set up pItem and/or pNode based on theItem/theNode
+                    ' also write the transaction to the transaction log
+                    pItem = theItem
+                    pNode = theNode
+                    ft.WriteLine("<MoveDown " & pItem.intNodeNbr & ">")
+                    ft.Flush()
+                Else
+                    ' set up pItem and/or pNode based on strAttributeElements() only
+                    pNode = TODO.FindNodeByNodeNbr(tree, Convert.ToInt32(strAttributeElements(0)))
+                    pItem = CType(pNode.Tag, cToDoItem.sItemInfo)
+                    pNode = TODO.FindNodeByNodeNbr(tree, pItem.intParentNodeNbr)
+                End If
+                ' move node with item pItem up within children of node pNode
+                ' can use intNdx, intlastNdx, localItem and aNode freely; tree points to tree being maniupulate
+                ' make localItem the Tag of the parent
+                localItem = CType(pNode.Tag, cToDoItem.sItemInfo)
+                If (localItem.strChildOrder = "") Then
+                    Throw New Exception("MoveDown called for non-Ordered node")
+                End If
+                Dim strElements() As String
+                Dim intElements() As Integer
+                'Dim intTemp As Integer
+                Dim intNodeNbrToMove As Integer
+                intNodeNbrToMove = pItem.intNodeNbr
+                strElements = Split(localItem.strChildOrder, ",")
+                If (strElements(0) <> "-1") Then
+                    intLastNdx = UBound(strElements)
+                    ReDim intElements(intLastNdx)
+                    For intNdx = 0 To intLastNdx
+                        intElements(intNdx) = Convert.ToInt32(strElements(intNdx))
+                    Next
+                    For intNdx = 0 To intLastNdx
+                        If (intElements(intNdx) = intNodeNbrToMove) Then
+                            If (intNdx < intLastNdx) Then
+                                'intTemp = intElements(intNdx + 1)
+                                'intElements(intNdx + 1) = intNodeNbrToMove
+                                'intElements(intNdx) = intTemp
+                                aNode = TODO.FindNodeByNodeNbr(tree, intNodeNbrToMove)
+                                pNode.Nodes.Remove(aNode)
+                                pNode.Nodes.Insert(intNdx + 1, aNode)
+                            Else
+                                If (Not IsNothing(ft)) Then
+                                    L.WriteToLog("Warning: Item at limit, will not actually be moved")
+                                End If
+                            End If
+                            Exit For
+                        End If
+                    Next
+                    TODO.BuildUpdatedOrderListInThisParentNode(pNode)
+                    aNode = TODO.FindNodeByNodeNbr(tree, intNodeNbrToMove)
+                    tree.SelectedNode = aNode
+                    ResortAndRedisplayParent(tree, aNode)
+                    If (Not IsNothing(ft)) Then
+                        boolIsChange = True
+                        ' provide human understandable description of action to log
+                        L.WriteToLog("Moved item (" & pItem.strText & ") Down")
+                    End If
+                Else
+                    Throw New Exception("MoveDown not possible, parent has no children in order list")
+                End If
+            Case "MoveBelow"
+                ' item: node to move, node: node to move below
+                Dim intNodeNbrWeAreMovingBelow As Integer
+                Dim strTextOfNodeWeAreMovingBelow As String
+                If (Not IsNothing(ft)) Then
+                    ' set up pItem and/or pNode based on theItem/theNode
+                    ' also write the transaction to the transaction log
+                    pItem = theItem 'node we are moving
+                    pNode = theNode 'node we are moving below
+                    localItem = CType(pNode.Tag, cToDoItem.sItemInfo)
+                    strTextOfNodeWeAreMovingBelow = localItem.strText
+                    intNodeNbrWeAreMovingBelow = localItem.intNodeNbr
+                    ft.WriteLine("<MoveBelow " & pItem.intNodeNbr & ":" & localItem.intNodeNbr & ">")
+                    ft.Flush()
+                Else
+                    ' set up pItem and/or pNode based on strAttributeElements() only
+                    aNode = TODO.FindNodeByNodeNbr(tree, Convert.ToInt32(strAttributeElements(0)))
+                    pItem = CType(aNode.Tag, cToDoItem.sItemInfo)
+                    intNodeNbrWeAreMovingBelow = Convert.ToInt32(strAttributeElements(1))
+                    pNode = TODO.FindNodeByNodeNbr(tree, intNodeNbrWeAreMovingBelow)
+                End If
+                ' pItem: tag of node we are moving; pNode: node we want to move pItem below (at same level)
+                ' can use intNdx, intlastNdx, localItem and aNode freely; tree points to tree being maniupulated
+                '
+                ' get a permanent pointer to the node we are moving
+                Dim bNode As TreeNode
+                bNode = TODO.FindNodeByNodeNbr(tree, pItem.intNodeNbr)
+                '
+                ' first make aNode the current parent of pItem
+                ' this is so we can "remove" it from the old parent
+                aNode = TODO.FindNodeByNodeNbr(tree, pItem.intParentNodeNbr)
+                localItem = CType(aNode.Tag, cToDoItem.sItemInfo)
+                ' fix: the node being moved CAN be from a non-ordered parent
+                'If (localItem.strChildOrder = "") Then
+                '    Throw New Exception("MoveBelow called for non-Ordered node")
+                'End If
+                aNode.Nodes.Remove(bNode)
+                If (localItem.strChildOrder <> "") Then
+                    TODO.BuildUpdatedOrderListInThisParentNode(aNode)
+                End If
+                ' Now move it to its new parent at correct location
+                ' make aNode the current parent of pNode
+                aNode = TODO.ParentOf(tree, pNode)
+                Dim localItem2 As cToDoItem.sItemInfo
+                localItem2 = CType(aNode.Tag, cToDoItem.sItemInfo)
+                ' which "position" in Parent Nodes is pNode?
+                ' ** move below will not work for an empty parent
+                Dim intIndexOfNodeInParent As Integer = -1
+                intLastNdx = aNode.Nodes.Count - 1
+                For intNdx = 0 To intLastNdx
+                    localItem = CType(aNode.Nodes(intNdx).Tag, cToDoItem.sItemInfo)
+                    If (localItem.intNodeNbr = intNodeNbrWeAreMovingBelow) Then
+                        intIndexOfNodeInParent = intNdx
+                        ' fix, also set new parent in node being moved
+                        pItem.intParentNodeNbr = localItem2.intNodeNbr
+                        bNode.Tag = pItem
+                        Exit For
+                    End If
+                Next
+                If (intIndexOfNodeInParent = -1) Then
+                    Throw New Exception("Node to move below is not registered to parent")
+                End If
+                ' ** going to assume insert at index n puts it "above" n
+                aNode.Nodes.Insert(intIndexOfNodeInParent + 1, bNode)
+                TODO.BuildUpdatedOrderListInThisParentNode(aNode)
+                '
+                'ResortAndRedisplayParent(tree, pNode)
+                If (Not IsNothing(ft)) Then
+                    boolIsChange = True
+                    ' provide human understandable description of action to log
+                    L.WriteToLog("Moved item (" & pItem.strText & ") Below (" & strTextOfNodeWeAreMovingBelow & ")")
                 End If
             Case Else
                 Throw New Exception("Unknown Transaction Name")
@@ -515,6 +829,9 @@ Public Class cTreeManipulator
         Dim thisItem, childItem As cToDoItem.sItemInfo
         Dim intNdx, intLastNdx As Integer
         Dim lowerOkay As Boolean
+        Dim strElements() As String
+        Dim boolIsOrdered As Boolean = False
+
         intValidateNodeCtr += 1
         thisItem = CType(n.Tag, cToDoItem.sItemInfo)
         L.WriteToLog("Checking node " & thisItem.intNodeNbr, True)
@@ -522,11 +839,30 @@ Public Class cTreeManipulator
             intValidateMaxNodeNbr = thisItem.intNodeNbr
         End If
         intLastNdx = n.Nodes.Count - 1
+        ' if this node is ordered, get metainfo for checking order is correct
+        If (thisItem.strChildOrder <> "") Then
+            If (thisItem.strChildOrder = "-1") Then
+                If (n.Nodes.Count <> 0) Then
+                    Return False
+                End If
+            Else
+                strElements = Split(thisItem.strChildOrder, ",")
+                If ((n.Nodes.Count - 1) <> UBound(strElements)) Then
+                    Return False
+                End If
+                boolIsOrdered = True
+            End If
+        End If
         If (n.Nodes.Count >= 0) Then
             For intNdx = 0 To intLastNdx
                 childItem = CType(n.Nodes(intNdx).Tag, cToDoItem.sItemInfo)
                 If (childItem.intParentNodeNbr <> thisItem.intNodeNbr) Then
                     Return False
+                End If
+                If (boolIsOrdered) Then
+                    If (childItem.intNodeNbr <> Convert.ToInt32(strElements(intNdx))) Then
+                        Return False
+                    End If
                 End If
                 lowerOkay = ValidateHelper(n.Nodes(intNdx), intValidateNodeCtr, intValidateMaxNodeNbr)
                 If (Not lowerOkay) Then
@@ -567,6 +903,48 @@ Public Class cTreeManipulator
         parent = TODO.FindNodeByNodeNbr(tree, item.intParentNodeNbr)
         If (parent Is Nothing) Then
             Throw New Exception("Parent not found")
+        End If
+
+        ' new : if an ordered parent, order by the list in the node
+        item = CType(parent.Tag, cToDoItem.sItemInfo)
+        If (item.strChildOrder <> "") Then
+            Dim strElements() As String
+            Dim intWantedChildNodeNbr As Integer
+            If (item.strChildOrder <> "-1") Then
+                strElements = Split(item.strChildOrder, ",")
+                intLastNdx = parent.Nodes.Count - 1
+                If (intLastNdx <> UBound(strElements)) Then
+                    Throw New Exception("ResortAndRedisplayParent: Order list element count does not match child node count")
+                End If
+                ReDim aNodes(intLastNdx)
+                    For intNdx = 0 To intLastNdx
+                        aNodes(intNdx) = parent.Nodes(intNdx)
+                    Next
+                    parent.Nodes.Clear()
+                For intNdx = 0 To intLastNdx
+                    intWantedChildNodeNbr = Convert.ToInt32(strElements(intNdx))
+                    For intNdx2 = 0 To intLastNdx
+                        item = CType(aNodes(intNdx2).Tag, cToDoItem.sItemInfo)
+                        If (item.intNodeNbr = intWantedChildNodeNbr) Then
+                            parent.Nodes.Add(aNodes(intNdx2))
+                            intWantedChildNodeNbr = -1
+                            Exit For
+                        End If
+                    Next
+                    If (intWantedChildNodeNbr <> -1) Then
+                        Throw New Exception("Child of ordered node not found")
+                    End If
+                Next
+            Else
+                If (parent.Nodes.Count <> 0) Then
+                    Throw New Exception("ResortAndRedisplayParent: Order list is empty but there are children nodes")
+                End If
+            End If
+            tree.SelectedNode = rememberSelectedNode
+            L.WriteToLog("In ReSort(): restore selected node: " & TODO.DebugGetNodeDescr(rememberSelectedNode), True)
+            tree.SelectedNode = rememberSelectedNode
+            L.WriteToLog("In ReSort(): Finished", True)
+            Exit Sub
         End If
 
         '' node num: 8 digits (last, smaller values higher)(19..26)

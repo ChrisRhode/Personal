@@ -129,7 +129,7 @@ Public Class Form1
     Dim gfTransactionFile As System.IO.StreamWriter
     Dim gMoveToParent As TreeNode = Nothing
     Dim gNodeToMove As TreeNode = Nothing
-
+    Dim gintMoveMode As Integer = 0
     ' *** how/where needed and where should event handlers be, here or in the transaction class? (for each, needed if not main visible tree?)
     Dim gBoolBypassEvents As Boolean = False
 
@@ -411,9 +411,12 @@ Public Class Form1
             Exit Sub
         End If
         L.WriteToLog("Select destination for: " & localItem.strText)
-        btnMove.Enabled = False
-        btnStartMultiMoveHere.Enabled = False
-        btnEndMultiMove.Enabled = True
+        'btnMove.Enabled = False
+        'btnStartMultiMoveHere.Enabled = False
+        ' ** so I overloaded this to permit cancellation of a move before completion?
+        'btnEndMultiMove.Enabled = True
+        gintMoveMode = 1
+        SetButtons1()
     End Sub
 
     Private Sub btnStartMultiMoveHere_Click(sender As Object, e As EventArgs) Handles btnStartMultiMoveHere.Click
@@ -433,9 +436,11 @@ Public Class Form1
         End If
         L.WriteToLog("Will start moving subsequent selected items to: " & localItem.strText)
         ' *** should also disable most or all of the other buttons!
-        btnMove.Enabled = False
-        btnStartMultiMoveHere.Enabled = False
-        btnEndMultiMove.Enabled = True
+        'btnMove.Enabled = False
+        'btnStartMultiMoveHere.Enabled = False
+        'btnEndMultiMove.Enabled = True
+        gintMoveMode = 2
+        SetButtons1()
     End Sub
 
     Private Sub btnEndMultiMove_Click(sender As Object, e As EventArgs) Handles btnEndMultiMove.Click
@@ -443,19 +448,23 @@ Public Class Form1
         ' This button can also be used to abort a single move
         If (Not IsNothing(gNodeToMove)) Then
             gNodeToMove = Nothing
-            btnStartMultiMoveHere.Enabled = True
-            btnEndMultiMove.Enabled = False
-            btnMove.Enabled = True
+            'btnStartMultiMoveHere.Enabled = True
+            'btnEndMultiMove.Enabled = False
+            'btnMove.Enabled = True
+            gintMoveMode = 0
+            SetButtons1()
             Exit Sub
         End If
         ' multimove end
         localItem = CType(gMoveToParent.Tag, cToDoItem.sItemInfo)
         L.WriteToLog("End moving items to: " & localItem.strText)
         gMoveToParent = Nothing
-        btnStartMultiMoveHere.Enabled = True
-        btnEndMultiMove.Enabled = False
-        btnMove.Enabled = True
+        'btnStartMultiMoveHere.Enabled = True
+        'btnEndMultiMove.Enabled = False
+        'btnMove.Enabled = True
         'gBoolBypassEvents = False
+        gintMoveMode = 0
+        SetButtons1()
     End Sub
 
     Private Sub btnDelete_Click(sender As Object, e As EventArgs) Handles btnDelete.Click
@@ -488,6 +497,10 @@ Public Class Form1
             MessageBox.Show("You cannot alter this node")
             Exit Sub
         End If
+        If (TODO.isAnOrderedChild(tvMain, aNode)) Then
+            MessageBox.Show("Changing priority is nonsensical when in an ordered sublist")
+            Exit Sub
+        End If
         gActual.ApplyNewTransaction(gfTransactionFile, tvMain, "PriUp", item, Nothing)
     End Sub
 
@@ -505,7 +518,123 @@ Public Class Form1
             MessageBox.Show("You cannot alter this node")
             Exit Sub
         End If
+        If (TODO.isAnOrderedChild(tvMain, aNode)) Then
+            MessageBox.Show("Changing priority is nonsensical when in an ordered sublist")
+            Exit Sub
+        End If
         gActual.ApplyNewTransaction(gfTransactionFile, tvMain, "PriDown", item, Nothing)
+    End Sub
+    Private Sub btnToggleNodeType_Click(sender As Object, e As EventArgs) Handles btnToggleNodeType.Click
+        Dim item As New cToDoItem.sItemInfo
+        Dim aNode As TreeNode
+
+        aNode = tvMain.SelectedNode
+        If (aNode Is Nothing) Then
+            MessageBox.Show("You must select a node first")
+            Exit Sub
+        End If
+        item = CType(aNode.Tag, cToDoItem.sItemInfo)
+        If (item.intNodeNbr <= 3) Then
+            MessageBox.Show("You cannot alter this node")
+            Exit Sub
+        End If
+        gActual.ApplyNewTransaction(gfTransactionFile, tvMain, "Toggle", item, Nothing)
+    End Sub
+
+    Private Sub btnMoveUp_Click(sender As Object, e As EventArgs) Handles btnMoveUp.Click
+        Dim item, pitem As New cToDoItem.sItemInfo
+        Dim aNode, pNode As TreeNode
+
+        aNode = tvMain.SelectedNode
+        If (aNode Is Nothing) Then
+            MessageBox.Show("You must select a node first")
+            Exit Sub
+        End If
+        item = CType(aNode.Tag, cToDoItem.sItemInfo)
+        ' check parent
+        If (item.intParentNodeNbr = -1) Then
+            MessageBox.Show("Node does not have a valid parent")
+            Exit Sub
+        End If
+        pNode = TODO.FindNodeByNodeNbr(tvMain, item.intParentNodeNbr)
+        pitem = CType(pNode.Tag, cToDoItem.sItemInfo)
+        If (pitem.strChildOrder = "") Then
+            MessageBox.Show("Node parent is not set to ordered")
+            Exit Sub
+        End If
+        gActual.ApplyNewTransaction(gfTransactionFile, tvMain, "MoveUp", item, pNode)
+    End Sub
+
+    Private Sub btnMoveDown_Click(sender As Object, e As EventArgs) Handles btnMoveDown.Click
+        Dim item, pitem As New cToDoItem.sItemInfo
+        Dim aNode, pNode As TreeNode
+
+        aNode = tvMain.SelectedNode
+        If (aNode Is Nothing) Then
+            MessageBox.Show("You must select a node first")
+            Exit Sub
+        End If
+        item = CType(aNode.Tag, cToDoItem.sItemInfo)
+        ' check parent
+        If (item.intParentNodeNbr = -1) Then
+            MessageBox.Show("Node does not have a valid parent")
+            Exit Sub
+        End If
+        pNode = TODO.FindNodeByNodeNbr(tvMain, item.intParentNodeNbr)
+        pitem = CType(pNode.Tag, cToDoItem.sItemInfo)
+        If (pitem.strChildOrder = "") Then
+            MessageBox.Show("Node parent is not set to ordered")
+            Exit Sub
+        End If
+        gActual.ApplyNewTransaction(gfTransactionFile, tvMain, "MoveDown", item, pNode)
+    End Sub
+
+    Private Sub btnMoveBelow_Click(sender As Object, e As EventArgs) Handles btnMoveBelow.Click
+        ' this will become a two step like regular move
+        Dim localItem As New cToDoItem.sItemInfo
+        Dim aNode As TreeNode
+
+        gNodeToMove = tvMain.SelectedNode
+        If (gNodeToMove Is Nothing) Then
+            MessageBox.Show("You must select a node first")
+            Exit Sub
+        End If
+        localItem = CType(gNodeToMove.Tag, cToDoItem.sItemInfo)
+        If (localItem.intNodeNbr <= 3) Then
+            MessageBox.Show("You cannot move this node")
+            gNodeToMove = Nothing
+            Exit Sub
+        End If
+        L.WriteToLog("Select destination for: " & localItem.strText)
+        'btnMoveBelow.Enabled = False
+        'btnStartMultiMoveHere.Enabled = False
+        'btnEndMultiMove.Enabled = True
+        gintMoveMode = 3
+        SetButtons1()
+    End Sub
+
+    Private Sub btnMoveToTop_Click(sender As Object, e As EventArgs) Handles btnMoveToTop.Click
+        Dim item, pitem As New cToDoItem.sItemInfo
+        Dim aNode, pNode As TreeNode
+
+        aNode = tvMain.SelectedNode
+        If (aNode Is Nothing) Then
+            MessageBox.Show("You must select a node first")
+            Exit Sub
+        End If
+        item = CType(aNode.Tag, cToDoItem.sItemInfo)
+        ' check parent
+        If (item.intParentNodeNbr = -1) Then
+            MessageBox.Show("Node does not have a valid parent")
+            Exit Sub
+        End If
+        pNode = TODO.FindNodeByNodeNbr(tvMain, item.intParentNodeNbr)
+        pitem = CType(pNode.Tag, cToDoItem.sItemInfo)
+        If (pitem.strChildOrder = "") Then
+            MessageBox.Show("Node parent is not set to ordered")
+            Exit Sub
+        End If
+        gActual.ApplyNewTransaction(gfTransactionFile, tvMain, "MoveToTop", item, pNode)
     End Sub
     Private Sub btnSave_Click(sender As Object, e As EventArgs) Handles btnSave.Click
         gActual.ApplyNewTransaction(gfTransactionFile, tvMain, "Saving", Nothing, Nothing)
@@ -571,57 +700,167 @@ Public Class Form1
         If (currNode Is Nothing) Then
             Exit Sub
         End If
-        If (Not (gMoveToParent Is Nothing)) Then
+        Select Case gintMoveMode
+            Case 0
+                ' no move mode is in progress
+                L.WriteToLog("After select: highlight", True)
+                currNode.BackColor = Color.LightBlue
+            Case 1
+                ' move already selected gNodeToMove into this newly selected node
+                If (IsNothing(gNodeToMove)) Then
+                    Throw New Exception("Mode mode 1 but node to move is not defined")
+                End If
+                ' we've selected node to move to ... set up for move gNodeToMove to currNode
+                tempItem = CType(currNode.Tag, cToDoItem.sItemInfo)
+                If (tempItem.intNodeNbr = 0) Or (tempItem.intNodeNbr = 3) Then
+                    MessageBox.Show("You cannot move to this node")
+                    Exit Sub
+                End If
+                tempItem = CType(gNodeToMove.Tag, cToDoItem.sItemInfo)
+                ' need to bypass this routine now until after move, because move triggers re-sort which will come back to us
+                L.WriteToLog("AfterSelect: Bypass enable", True)
+                gBoolBypassEvents = True
+                ' now that bypass is on, deselect the node now so it won't pass through here 
+                tvMain.SelectedNode = Nothing
+                L.WriteToLog("After select: Start move to node", True)
+                ' ** move transaction must handle if old or new parent is ordered
+                gActual.ApplyNewTransaction(gfTransactionFile, tvMain, "Move", tempItem, currNode)
+                L.WriteToLog("After select: End move to node", True)
+                ' note by analysis of event chain: no node is selected at this point
+                ' now unwind move
+                ' gBoolBypassEvents = False
+                currNode = gNodeToMove
+                gNodeToMove = Nothing
+                gintMoveMode = 0
+                'btnMove.Enabled = True
+                'btnStartMultiMoveHere.Enabled = True
+                L.WriteToLog("AfterSelect: Bypass disable", True)
+                gBoolBypassEvents = False
+                ' now make the node we move selected
+                tvMain.SelectedNode = currNode
+                SetButtons1()
+            Case 2
+                ' move this newly selected node under the already selected gMoveToParent
+                If (IsNothing(gMoveToParent)) Then
+                    Throw New Exception("Mode mode 2 but parent is not defined")
+                End If
+                ' we've selected a node to move
+                boolRememberBypass = gBoolBypassEvents
+                L.WriteToLog("AfterSelect: Bypass enable", True)
+                gBoolBypassEvents = True
+                '' now that bypass is on, deselect the node now so it won't pass through here 
+                'tvMain.SelectedNode = Nothing
+                currNodeItem = CType(currNode.Tag, cToDoItem.sItemInfo)
+                ' *** perform checks here for illegal moves
+                ' *** need to implement: do not allow a parent to move to a child
+                If (currNodeItem.intNodeNbr <= 3) Then
+                    MessageBox.Show("You cannot move this node")
+                    Exit Sub
+                End If '
+                L.WriteToLog("After select: Start move to parent", True)
+                ' ** move transaction must handle if old or new parent is ordered
+                gActual.ApplyNewTransaction(gfTransactionFile, tvMain, "Move", currNodeItem, gMoveToParent)
+                L.WriteToLog("After select: End move to parent", True)
+                L.WriteToLog("AfterSelect: Bypass disable", True)
+                gBoolBypassEvents = boolRememberBypass
+            Case 3
+                ' move already selected gNodeToMove BELOW this newly selected node
+                If (IsNothing(gNodeToMove)) Then
+                    Throw New Exception("Mode mode 3 but node to move is not defined")
+                End If
+                tempItem = CType(currNode.Tag, cToDoItem.sItemInfo)
+                If (tempItem.intNodeNbr <= 3) Then
+                    MessageBox.Show("You cannot move below this node")
+                    Exit Sub
+                End If
+                ' ** must not allow it to go "below" a node that does not have an ordered parent
+                If (Not TODO.isOrdered(TODO.ParentOf(tvMain, currNode))) Then
+                    MessageBox.Show("Parent of that node is not ordered")
+                    Exit Sub
+                End If
+                ' ** for regular Move transaction, now needs to handle
+                '   move a into b (parent is ordered or not ordered)(if ordered, put it at the bottom)
+                ' ** MoveBelow is new transaction and assumes parent is ordered
+                ' **** we need some deep thought here
+                ' ** at this point, we need special handling to move gNodeToMove below currNode
+                ' it must get inserted, and then the parent ordering list updated, and then the parent redisplayed with new order
+                tempItem = CType(gNodeToMove.Tag, cToDoItem.sItemInfo)
+                ' need to bypass this routine now until after move, because move triggers re-sort which will come back to us
+                L.WriteToLog("AfterSelect: Bypass enable", True)
+                gBoolBypassEvents = True
+                ' now that bypass is on, deselect the node now so it won't pass through here 
+                tvMain.SelectedNode = Nothing
+                L.WriteToLog("After select: Start move below node", True)
+                ' ** move transaction must handle if old or new parent is ordered
+                gActual.ApplyNewTransaction(gfTransactionFile, tvMain, "MoveBelow", tempItem, currNode)
+                L.WriteToLog("After select: End move below node", True)
+                ' note by analysis of event chain: no node is selected at this point
+                ' now unwind move
+                ' gBoolBypassEvents = False
+                currNode = gNodeToMove
+                gNodeToMove = Nothing
+                gintMoveMode = 0
+                'btnMove.Enabled = True
+                'btnStartMultiMoveHere.Enabled = True
+                L.WriteToLog("AfterSelect: Bypass disable", True)
+                gBoolBypassEvents = False
+                ' now make the node we move selected
+                tvMain.SelectedNode = currNode
+                SetButtons1()
+            Case Else
+                Throw New Exception("Bad case for move mode")
+        End Select
+        'If (Not (gMoveToParent Is Nothing)) Then
 
-            ' we've selected a node to move
-            boolRememberBypass = gBoolBypassEvents
-            L.WriteToLog("AfterSelect: Bypass enable", True)
-            gBoolBypassEvents = True
-            '' now that bypass is on, deselect the node now so it won't pass through here 
-            'tvMain.SelectedNode = Nothing
-            currNodeItem = CType(currNode.Tag, cToDoItem.sItemInfo)
-            ' *** perform checks here for illegal moves
-            ' *** need to implement: do not allow a parent to move to a child
-            If (currNodeItem.intNodeNbr <= 3) Then
-                MessageBox.Show("You cannot move this node")
-                Exit Sub
-            End If '
-            L.WriteToLog("After select: Start move to parent", True)
-            gActual.ApplyNewTransaction(gfTransactionFile, tvMain, "Move", currNodeItem, gMoveToParent)
-            L.WriteToLog("After select: End move to parent", True)
-            L.WriteToLog("AfterSelect: Bypass disable", True)
-            gBoolBypassEvents = boolRememberBypass
-        ElseIf (Not (gNodeToMove Is Nothing)) Then
-            ' we've selected node to move to ... set up for move gNodeToMove to currNode
-            tempItem = CType(currNode.Tag, cToDoItem.sItemInfo)
-            If (tempItem.intNodeNbr = 0) Or (tempItem.intNodeNbr = 3) Then
-                MessageBox.Show("You cannot move to this node")
-                Exit Sub
-            End If
-            tempItem = CType(gNodeToMove.Tag, cToDoItem.sItemInfo)
-            ' need to bypass this routine now until after move, because move triggers re-sort which will come back to us
-            L.WriteToLog("AfterSelect: Bypass enable", True)
-            gBoolBypassEvents = True
-            ' now that bypass is on, deselect the node now so it won't pass through here 
-            tvMain.SelectedNode = Nothing
-            L.WriteToLog("After select: Start move to node", True)
-            gActual.ApplyNewTransaction(gfTransactionFile, tvMain, "Move", tempItem, currNode)
-            L.WriteToLog("After select: End move to node", True)
-            ' note by analysis of event chain: no node is selected at this point
-            ' now unwind move
-            ' gBoolBypassEvents = False
-            currNode = gNodeToMove
-            gNodeToMove = Nothing
-            btnMove.Enabled = True
-            btnStartMultiMoveHere.Enabled = True
-            L.WriteToLog("AfterSelect: Bypass disable", True)
-            gBoolBypassEvents = False
-            ' now make the node we move selected
-            tvMain.SelectedNode = currNode
-        Else
-            L.WriteToLog("After select: highlight", True)
-            currNode.BackColor = Color.LightBlue
-        End If
+        '    ' we've selected a node to move
+        '    boolRememberBypass = gBoolBypassEvents
+        '    L.WriteToLog("AfterSelect: Bypass enable", True)
+        '    gBoolBypassEvents = True
+        '    '' now that bypass is on, deselect the node now so it won't pass through here 
+        '    'tvMain.SelectedNode = Nothing
+        '    currNodeItem = CType(currNode.Tag, cToDoItem.sItemInfo)
+        '    ' *** perform checks here for illegal moves
+        '    ' *** need to implement: do not allow a parent to move to a child
+        '    If (currNodeItem.intNodeNbr <= 3) Then
+        '        MessageBox.Show("You cannot move this node")
+        '        Exit Sub
+        '    End If '
+        '    L.WriteToLog("After select: Start move to parent", True)
+        '    gActual.ApplyNewTransaction(gfTransactionFile, tvMain, "Move", currNodeItem, gMoveToParent)
+        '    L.WriteToLog("After select: End move to parent", True)
+        '    L.WriteToLog("AfterSelect: Bypass disable", True)
+        '    gBoolBypassEvents = boolRememberBypass
+        'ElseIf (Not (gNodeToMove Is Nothing)) Then
+        '    ' we've selected node to move to ... set up for move gNodeToMove to currNode
+        '    tempItem = CType(currNode.Tag, cToDoItem.sItemInfo)
+        '    If (tempItem.intNodeNbr = 0) Or (tempItem.intNodeNbr = 3) Then
+        '        MessageBox.Show("You cannot move to this node")
+        '        Exit Sub
+        '    End If
+        '    tempItem = CType(gNodeToMove.Tag, cToDoItem.sItemInfo)
+        '    ' need to bypass this routine now until after move, because move triggers re-sort which will come back to us
+        '    L.WriteToLog("AfterSelect: Bypass enable", True)
+        '    gBoolBypassEvents = True
+        '    ' now that bypass is on, deselect the node now so it won't pass through here 
+        '    tvMain.SelectedNode = Nothing
+        '    L.WriteToLog("After select: Start move to node", True)
+        '    gActual.ApplyNewTransaction(gfTransactionFile, tvMain, "Move", tempItem, currNode)
+        '    L.WriteToLog("After select: End move to node", True)
+        '    ' note by analysis of event chain: no node is selected at this point
+        '    ' now unwind move
+        '    ' gBoolBypassEvents = False
+        '    currNode = gNodeToMove
+        '    gNodeToMove = Nothing
+        '    btnMove.Enabled = True
+        '    btnStartMultiMoveHere.Enabled = True
+        '    L.WriteToLog("AfterSelect: Bypass disable", True)
+        '    gBoolBypassEvents = False
+        '    ' now make the node we move selected
+        '    tvMain.SelectedNode = currNode
+        'Else
+        '    L.WriteToLog("After select: highlight", True)
+        '    currNode.BackColor = Color.LightBlue
+        'End If
     End Sub
 
     Private Sub tvMain_AfterExpand(sender As Object, e As TreeViewEventArgs) Handles tvMain.AfterExpand
@@ -654,7 +893,80 @@ Public Class Form1
     End Sub
     '
     ' Other support routines
-    '
+    '\
+    Sub SetButtons1()
+        Select Case gintMoveMode
+            Case 0
+                btnAdd.Enabled = True
+                btnEdit.Enabled = True
+                btnDelete.Enabled = True
+                btnPriUp.Enabled = True
+                btnPriDown.Enabled = True
+                btnMove.Enabled = True
+                btnStartMultiMoveHere.Enabled = True
+                btnEndMultiMove.Enabled = False
+                btnToggleNodeType.Enabled = True
+                btnMoveUp.Enabled = True
+                btnMoveDown.Enabled = True
+                btnMoveBelow.Enabled = True
+                btnCheck.Enabled = True
+                btnSave.Enabled = True
+                btnTrnLog.Enabled = True
+            Case 1
+                ' single move into upcoming selected parent
+                btnAdd.Enabled = False
+                btnEdit.Enabled = False
+                btnDelete.Enabled = False
+                btnPriUp.Enabled = False
+                btnPriDown.Enabled = False
+                btnMove.Enabled = False
+                btnStartMultiMoveHere.Enabled = False
+                btnEndMultiMove.Enabled = True
+                btnToggleNodeType.Enabled = False
+                btnMoveUp.Enabled = False
+                btnMoveDown.Enabled = False
+                btnMoveBelow.Enabled = False
+                btnCheck.Enabled = False
+                btnSave.Enabled = False
+                btnTrnLog.Enabled = False
+            Case 2
+                ' multi move ongoing into selected parent until end
+                btnAdd.Enabled = False
+                btnEdit.Enabled = False
+                btnDelete.Enabled = False
+                btnPriUp.Enabled = False
+                btnPriDown.Enabled = False
+                btnMove.Enabled = False
+                btnStartMultiMoveHere.Enabled = False
+                btnEndMultiMove.Enabled = True
+                btnToggleNodeType.Enabled = False
+                btnMoveUp.Enabled = False
+                btnMoveDown.Enabled = False
+                btnMoveBelow.Enabled = False
+                btnCheck.Enabled = False
+                btnSave.Enabled = False
+                btnTrnLog.Enabled = False
+            Case 3
+                ' single move below another node (ordered)
+                btnAdd.Enabled = False
+                btnEdit.Enabled = False
+                btnDelete.Enabled = False
+                btnPriUp.Enabled = False
+                btnPriDown.Enabled = False
+                btnMove.Enabled = False
+                btnStartMultiMoveHere.Enabled = False
+                btnEndMultiMove.Enabled = True
+                btnToggleNodeType.Enabled = False
+                btnMoveUp.Enabled = False
+                btnMoveDown.Enabled = False
+                btnMoveBelow.Enabled = False
+                btnCheck.Enabled = False
+                btnSave.Enabled = False
+                btnTrnLog.Enabled = False
+            Case Else
+                Throw New Exception("SetButtons, bad value for move move")
+        End Select
+    End Sub
     Sub CreateNewList()
         Dim aNode As TreeNode
         Dim localItem As cToDoItem.sItemInfo
@@ -730,4 +1042,6 @@ Public Class Form1
             L.WriteToLog("Validation failed")
         End If
     End Sub
+
+
 End Class
