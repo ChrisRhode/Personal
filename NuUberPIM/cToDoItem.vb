@@ -49,7 +49,12 @@ Public Class cToDoItem
 
         theNodeItem = CType(theNode.Tag, cToDoItem.sItemInfo)
         theToParentItem = CType(toParent.Tag, cToDoItem.sItemInfo)
-
+        If (theToParentItem.intNodeNbr = 3) Then
+            ' fix (we will see), if deleting a node, clear it's selection state ... no node will remain selected
+            tree.SelectedNode = Nothing
+            ' doesn't fire before select/after select in main, so clear any highlighting manually
+            theNode.BackColor = Color.White
+        End If
         intNodeCurrentParentNbr = theNodeItem.intParentNodeNbr
         If (intNodeCurrentParentNbr > -1) Then
             theCurrentParent = FindNodeByNodeNbr(tree, intNodeCurrentParentNbr)

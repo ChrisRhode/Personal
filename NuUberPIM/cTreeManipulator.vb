@@ -148,6 +148,7 @@ Public Class cTreeManipulator
 
                 aNode = New TreeNode
                 aNode.Text = TODO.GetDisplayTextForItem(pItem)
+                aNode.Checked = pItem.isChecked
                 aNode.Tag = pItem
                 pNode.Nodes.Add(aNode)
                 If (localItem.strChildOrder <> "") Then
@@ -197,6 +198,53 @@ Public Class cTreeManipulator
                     boolIsChange = True
                     ' provide human understandable description of action to log
                     L.WriteToLog("Edited (" & pItem.strText & ")")
+                End If
+            Case "Checkbox"
+                ' input : theItem only, item to have checkbox toggled
+                ' for user mode, toggles state of checkbox, records the new state
+                ' for trn mode sets the checkbox state
+                ' item: increase priority by 1
+                If (Not IsNothing(ft)) Then
+                    ' set up pItem and/or pNode based on theItem/theNode
+                    ' also write the transaction to the transaction log
+                    pItem = theItem
+                    pNode = TODO.FindNodeByNodeNbr(tree, theItem.intNodeNbr)
+                    pItem.isChecked = Not pItem.isChecked
+                    strAux = "0"
+                    If (pItem.isChecked) Then
+                        strAux = "1"
+                    End If
+                    ft.WriteLine("<Checkbox " & pItem.intNodeNbr & ":" & strAux & ">")
+                    ft.Flush()
+                Else
+                    ' set up pItem and/or pNode based on strAttributeElements() only
+                    pNode = TODO.FindNodeByNodeNbr(tree, Convert.ToInt32(strAttributeElements(0)))
+                    pItem = CType(pNode.Tag, cToDoItem.sItemInfo)
+                    Select Case strAttributeElements(1)
+                        Case "0"
+                            If (Not pItem.isChecked) Then
+                                Throw New Exception("Node not in correct checked state")
+                            End If
+                            pItem.isChecked = False
+                        Case "1"
+                            If (pItem.isChecked) Then
+                                Throw New Exception("Node not in correct checked state")
+                            End If
+                            pItem.isChecked = True
+                        Case Else
+                            Throw New Exception("Bad value for checkbox in transaction log")
+                    End Select
+                End If
+                pNode.Tag = pItem
+                'ResortAndRedisplayParent(tree, pNode)
+                If (Not IsNothing(ft)) Then
+                    boolIsChange = True
+                    ' provide human understandable description of action to log
+                    If (pItem.isChecked) Then
+                        L.WriteToLog("Checked set to YES for (" & pItem.strText & ")")
+                    Else
+                        L.WriteToLog("Checked set to NO for (" & pItem.strText & ")")
+                    End If
                 End If
             Case "Delete"
                 ' item: item to be deleted, i.e. move its node to Trash tree
@@ -710,6 +758,7 @@ Public Class cTreeManipulator
             End If
             aNode = New TreeNode
             aNode.Text = TODO.GetDisplayTextForItem(item)
+            aNode.Checked = item.isChecked
             aNode.Tag = item
             parentNode.Nodes.Add(aNode)
         End While
@@ -842,6 +891,10 @@ Public Class cTreeManipulator
         L.WriteToLog("Checking node " & thisItem.intNodeNbr, True)
         If (thisItem.intNodeNbr > intValidateMaxNodeNbr) Then
             intValidateMaxNodeNbr = thisItem.intNodeNbr
+        End If
+        If (thisItem.isChecked <> n.Checked) Then
+            gstrValidationErrorReason = "(" & thisItem.intNodeNbr & ") " & thisItem.strText & ": " & "Check state of node does not match tag data"
+            Return False
         End If
         intLastNdx = n.Nodes.Count - 1
         ' if this node is ordered, get metainfo for checking order is correct

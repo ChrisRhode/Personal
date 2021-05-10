@@ -30,6 +30,7 @@ Partial Class frmAdd
         Me.lbMatches = New System.Windows.Forms.ListBox()
         Me.cbPartialWordMatches = New System.Windows.Forms.CheckBox()
         Me.btnGoto = New System.Windows.Forms.Button()
+        Me.btnFindItemsWithDates = New System.Windows.Forms.Button()
         Me.SuspendLayout()
         '
         'tbNewItem
@@ -43,7 +44,7 @@ Partial Class frmAdd
         '
         Me.btnOK.Location = New System.Drawing.Point(606, 20)
         Me.btnOK.Name = "btnOK"
-        Me.btnOK.Size = New System.Drawing.Size(75, 23)
+        Me.btnOK.Size = New System.Drawing.Size(75, 32)
         Me.btnOK.TabIndex = 2
         Me.btnOK.Text = "OK"
         Me.btnOK.UseVisualStyleBackColor = True
@@ -52,16 +53,16 @@ Partial Class frmAdd
         '
         Me.btnCancel.Location = New System.Drawing.Point(688, 20)
         Me.btnCancel.Name = "btnCancel"
-        Me.btnCancel.Size = New System.Drawing.Size(75, 23)
+        Me.btnCancel.Size = New System.Drawing.Size(75, 32)
         Me.btnCancel.TabIndex = 3
         Me.btnCancel.Text = "Cancel"
         Me.btnCancel.UseVisualStyleBackColor = True
         '
         'btnEdit
         '
-        Me.btnEdit.Location = New System.Drawing.Point(606, 50)
+        Me.btnEdit.Location = New System.Drawing.Point(606, 62)
         Me.btnEdit.Name = "btnEdit"
-        Me.btnEdit.Size = New System.Drawing.Size(157, 23)
+        Me.btnEdit.Size = New System.Drawing.Size(157, 32)
         Me.btnEdit.TabIndex = 4
         Me.btnEdit.Text = "Extended Edit"
         Me.btnEdit.UseVisualStyleBackColor = True
@@ -85,7 +86,7 @@ Partial Class frmAdd
         'cbPartialWordMatches
         '
         Me.cbPartialWordMatches.AutoSize = True
-        Me.cbPartialWordMatches.Location = New System.Drawing.Point(606, 80)
+        Me.cbPartialWordMatches.Location = New System.Drawing.Point(604, 116)
         Me.cbPartialWordMatches.Name = "cbPartialWordMatches"
         Me.cbPartialWordMatches.Size = New System.Drawing.Size(165, 21)
         Me.cbPartialWordMatches.TabIndex = 7
@@ -94,19 +95,29 @@ Partial Class frmAdd
         '
         'btnGoto
         '
-        Me.btnGoto.Location = New System.Drawing.Point(606, 119)
+        Me.btnGoto.Location = New System.Drawing.Point(606, 167)
         Me.btnGoto.Name = "btnGoto"
-        Me.btnGoto.Size = New System.Drawing.Size(75, 23)
+        Me.btnGoto.Size = New System.Drawing.Size(75, 32)
         Me.btnGoto.TabIndex = 8
-        Me.btnGoto.Text = "Go To"
+        Me.btnGoto.Text = "Go To Selected"
         Me.btnGoto.UseVisualStyleBackColor = True
+        '
+        'btnFindItemsWithDates
+        '
+        Me.btnFindItemsWithDates.Location = New System.Drawing.Point(604, 256)
+        Me.btnFindItemsWithDates.Name = "btnFindItemsWithDates"
+        Me.btnFindItemsWithDates.Size = New System.Drawing.Size(205, 32)
+        Me.btnFindItemsWithDates.TabIndex = 9
+        Me.btnFindItemsWithDates.Text = "Find Items With Dates"
+        Me.btnFindItemsWithDates.UseVisualStyleBackColor = True
         '
         'frmAdd
         '
         Me.AcceptButton = Me.btnOK
         Me.AutoScaleDimensions = New System.Drawing.SizeF(8.0!, 16.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
-        Me.ClientSize = New System.Drawing.Size(781, 437)
+        Me.ClientSize = New System.Drawing.Size(821, 437)
+        Me.Controls.Add(Me.btnFindItemsWithDates)
         Me.Controls.Add(Me.btnGoto)
         Me.Controls.Add(Me.cbPartialWordMatches)
         Me.Controls.Add(Me.lbMatches)
@@ -130,4 +141,5 @@ Partial Class frmAdd
     Friend WithEvents lbMatches As ListBox
     Friend WithEvents cbPartialWordMatches As CheckBox
     Friend WithEvents btnGoto As Button
+    Friend WithEvents btnFindItemsWithDates As Button
 End Class

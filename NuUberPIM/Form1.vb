@@ -269,6 +269,7 @@ Public Class Form1
         gActual.mintValidateAfterEveryThisManyChanges = intWantToAutoValidateAfterThisManyChanges
         gActual.L = L
 
+        tvMain.CheckBoxes = True
         If (Not FileIO.FileSystem.FileExists(gstrCurrentContentFile)) Then
             ' create the initial data
             CreateNewList()
@@ -894,6 +895,8 @@ Public Class Form1
                 gBoolBypassEvents = boolRememberBypass
                 ' for now, after expand, don't change selected node, it seems jarring
                 'tvMain.SelectedNode = nodeWeExpand
+                ' 05/09/2021 instead, make it the node at the top of the view
+                tvMain.TopNode = nodeWeExpand
             End If
         End If
     End Sub
@@ -1049,5 +1052,24 @@ Public Class Form1
         End If
     End Sub
 
+    Private Sub tvMain_AfterCheck(sender As Object, e As TreeViewEventArgs) Handles tvMain.AfterCheck
+        ' change the checked state of the node
+        Dim item As New cToDoItem.sItemInfo
+        Dim aNode As TreeNode
 
+        aNode = e.Node
+        item = CType(aNode.Tag, cToDoItem.sItemInfo)
+        If (item.intNodeNbr <= 3) Then
+            MessageBox.Show("You cannot alter this node")
+            Exit Sub
+        End If
+        gActual.ApplyNewTransaction(gfTransactionFile, tvMain, "Checkbox", item, Nothing)
+    End Sub
+
+    Private Sub btnCollapseAll_Click(sender As Object, e As EventArgs) Handles btnCollapseAll.Click
+        tvMain.CollapseAll()
+        ' *** another case where sort should be done ... look at how sort works, it is destructive in a sense
+        tvMain.Nodes(0).Expand()
+        TODO.FindNodeByNodeNbr(tvMain, 2).Expand()
+    End Sub
 End Class

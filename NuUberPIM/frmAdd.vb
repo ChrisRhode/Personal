@@ -2,10 +2,12 @@
 Option Strict On
 Public Class frmAdd
 
+    Private gdtNull As Date = DateValue("01/01/1900")
     Public Structure sMatchItem
         Dim strItemText As String
         Dim intNodeNbr As Integer
         Dim intWordMatchCnt As Integer
+        Dim dtMostImportantDate As Date
     End Structure
 
     Public tv As TreeView
@@ -30,6 +32,26 @@ Public Class frmAdd
                 Return -1
             End If
         End Function
+
+    End Class
+
+    Class MatchDateCompare : Implements IComparer(Of sMatchItem)
+        Public Function Compare(ByVal i1m As sMatchItem, ByVal i2m As sMatchItem) As Integer Implements IComparer(Of sMatchItem).Compare
+            'Dim i1m, i2m As sMatchItem
+            'i1m = CType(i1, sMatchItem)
+            'i2m = CType(i2, sMatchItem)
+            Dim intResult As Long
+
+            intResult = DateDiff(DateInterval.Day, i1m.dtMostImportantDate, i2m.dtMostImportantDate)
+            If (intResult = 0) Then
+                Return 0
+            ElseIf (intResult > 0) Then
+                Return -1
+            Else
+                Return 1
+            End If
+        End Function
+
     End Class
     Private Sub frmAdd_Load(sender As Object, e As EventArgs) Handles Me.Load
         ' May be unneeded, look at load behavior, triggered on Show or ShowDialog
@@ -113,6 +135,31 @@ Public Class frmAdd
         End If
     End Sub
 
+    Sub FindNodesWithDates(n As TreeNode)
+        Dim item As cToDoItem.sItemInfo
+        Dim match_item As sMatchItem
+        Dim intNdx, intLastNdx As Integer
+        item = CType(n.Tag, cToDoItem.sItemInfo)
+        If (item.dtDateOfEvent <> gdtnull) Or (item.dtDateOfBumpToTop <> gdtnull) Then
+            match_item = New sMatchItem
+            match_item.strItemText = TODO.GetDisplayTextForItem(item)
+            match_item.intNodeNbr = item.intNodeNbr
+            match_item.intWordMatchCnt = 0
+            If (item.dtDateOfEvent <> gdtNull) Then
+                match_item.dtMostImportantDate = item.dtDateOfEvent
+            Else
+                match_item.dtMostImportantDate = item.dtDateOfBumpToTop
+            End If
+            Matches.Add(match_item)
+        End If
+
+        intLastNdx = n.Nodes.Count - 1
+        If (intLastNdx >= 0) Then
+            For intNdx = 0 To intLastNdx
+                FindNodesWithDates(n.Nodes(intNdx))
+            Next
+        End If
+    End Sub
     ' handle transitons from and to edit form (text copy)
     Private Sub btnOK_Click(sender As Object, e As EventArgs) Handles btnOK.Click
         gBoolCancel = False
@@ -190,6 +237,22 @@ Public Class frmAdd
         If (lbMatches.SelectedIndex <> -1) Then
             gintGoToNodeNbr = Matches(lbMatches.SelectedIndex).intNodeNbr
             Me.Close()
+        End If
+    End Sub
+
+    Private Sub btnFindItemsWithDates_Click(sender As Object, e As EventArgs) Handles btnFindItemsWithDates.Click
+        Dim intNdx, intLastNdx As Integer
+        lbMatches.Items.Clear()
+        Matches.Clear()
+        FindNodesWithDates(tv.Nodes(0))
+        intLastNdx = Matches.Count - 1
+        If (intLastNdx >= 0) Then
+            ' sort the list based on number of word matches first then alphabetically
+            Matches.Sort(New MatchDateCompare)
+            '
+            For intNdx = 0 To intLastNdx
+                lbMatches.Items.Add(Matches(intNdx).strItemText)
+            Next
         End If
     End Sub
 End Class
