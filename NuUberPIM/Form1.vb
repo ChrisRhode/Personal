@@ -358,6 +358,12 @@ Public Class Form1
         fmAdd.item = item
         fmAdd.ShowDialog()
 
+        If (fmAdd.gintGoToNodeNbr <> -1) Then
+            gActual.mintLastNodeNbrUsed -= 1
+            tvMain.SelectedNode = TODO.FindNodeByNodeNbr(tvMain, fmAdd.gintGoToNodeNbr)
+            Exit Sub
+        End If
+
         If (Not fmAdd.gBoolCancel) Then
             item = fmAdd.item
             item.intParentNodeNbr = parentItem.intNodeNbr
@@ -1039,7 +1045,7 @@ Public Class Form1
         If (gActual.ValidateTree(tvMain, gActual.mintNumberOfNodesInTree, gActual.mintLastNodeNbrUsed)) Then
             L.WriteToLog("Validation passed")
         Else
-            L.WriteToLog("Validation failed")
+            L.WriteToLog("Validation failed (" & gActual.gstrValidationErrorReason & ")")
         End If
     End Sub
 

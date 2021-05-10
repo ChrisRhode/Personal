@@ -23,10 +23,13 @@ Partial Class frmAdd
     <System.Diagnostics.DebuggerStepThrough()> _
     Private Sub InitializeComponent()
         Me.tbNewItem = New System.Windows.Forms.TextBox()
-        Me.tbMatches = New System.Windows.Forms.TextBox()
         Me.btnOK = New System.Windows.Forms.Button()
         Me.btnCancel = New System.Windows.Forms.Button()
         Me.btnEdit = New System.Windows.Forms.Button()
+        Me.tvWhereFound = New System.Windows.Forms.TreeView()
+        Me.lbMatches = New System.Windows.Forms.ListBox()
+        Me.cbPartialWordMatches = New System.Windows.Forms.CheckBox()
+        Me.btnGoto = New System.Windows.Forms.Button()
         Me.SuspendLayout()
         '
         'tbNewItem
@@ -35,16 +38,6 @@ Partial Class frmAdd
         Me.tbNewItem.Name = "tbNewItem"
         Me.tbNewItem.Size = New System.Drawing.Size(560, 22)
         Me.tbNewItem.TabIndex = 0
-        '
-        'tbMatches
-        '
-        Me.tbMatches.Location = New System.Drawing.Point(25, 80)
-        Me.tbMatches.Multiline = True
-        Me.tbMatches.Name = "tbMatches"
-        Me.tbMatches.ReadOnly = True
-        Me.tbMatches.ScrollBars = System.Windows.Forms.ScrollBars.Both
-        Me.tbMatches.Size = New System.Drawing.Size(560, 156)
-        Me.tbMatches.TabIndex = 1
         '
         'btnOK
         '
@@ -73,27 +66,68 @@ Partial Class frmAdd
         Me.btnEdit.Text = "Extended Edit"
         Me.btnEdit.UseVisualStyleBackColor = True
         '
+        'tvWhereFound
+        '
+        Me.tvWhereFound.Location = New System.Drawing.Point(25, 256)
+        Me.tvWhereFound.Name = "tvWhereFound"
+        Me.tvWhereFound.Size = New System.Drawing.Size(560, 152)
+        Me.tvWhereFound.TabIndex = 5
+        '
+        'lbMatches
+        '
+        Me.lbMatches.FormattingEnabled = True
+        Me.lbMatches.ItemHeight = 16
+        Me.lbMatches.Location = New System.Drawing.Point(25, 78)
+        Me.lbMatches.Name = "lbMatches"
+        Me.lbMatches.Size = New System.Drawing.Size(560, 148)
+        Me.lbMatches.TabIndex = 6
+        '
+        'cbPartialWordMatches
+        '
+        Me.cbPartialWordMatches.AutoSize = True
+        Me.cbPartialWordMatches.Location = New System.Drawing.Point(606, 80)
+        Me.cbPartialWordMatches.Name = "cbPartialWordMatches"
+        Me.cbPartialWordMatches.Size = New System.Drawing.Size(165, 21)
+        Me.cbPartialWordMatches.TabIndex = 7
+        Me.cbPartialWordMatches.Text = "Partial Word Matches"
+        Me.cbPartialWordMatches.UseVisualStyleBackColor = True
+        '
+        'btnGoto
+        '
+        Me.btnGoto.Location = New System.Drawing.Point(606, 119)
+        Me.btnGoto.Name = "btnGoto"
+        Me.btnGoto.Size = New System.Drawing.Size(75, 23)
+        Me.btnGoto.TabIndex = 8
+        Me.btnGoto.Text = "Go To"
+        Me.btnGoto.UseVisualStyleBackColor = True
+        '
         'frmAdd
         '
         Me.AcceptButton = Me.btnOK
         Me.AutoScaleDimensions = New System.Drawing.SizeF(8.0!, 16.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
-        Me.ClientSize = New System.Drawing.Size(781, 260)
+        Me.ClientSize = New System.Drawing.Size(781, 437)
+        Me.Controls.Add(Me.btnGoto)
+        Me.Controls.Add(Me.cbPartialWordMatches)
+        Me.Controls.Add(Me.lbMatches)
+        Me.Controls.Add(Me.tvWhereFound)
         Me.Controls.Add(Me.btnEdit)
         Me.Controls.Add(Me.btnCancel)
         Me.Controls.Add(Me.btnOK)
-        Me.Controls.Add(Me.tbMatches)
         Me.Controls.Add(Me.tbNewItem)
         Me.Name = "frmAdd"
-        Me.Text = "frmAdd"
+        Me.Text = "Add/Find"
         Me.ResumeLayout(False)
         Me.PerformLayout()
 
     End Sub
 
     Friend WithEvents tbNewItem As TextBox
-    Friend WithEvents tbMatches As TextBox
     Friend WithEvents btnOK As Button
     Friend WithEvents btnCancel As Button
     Friend WithEvents btnEdit As Button
+    Friend WithEvents tvWhereFound As TreeView
+    Friend WithEvents lbMatches As ListBox
+    Friend WithEvents cbPartialWordMatches As CheckBox
+    Friend WithEvents btnGoto As Button
 End Class

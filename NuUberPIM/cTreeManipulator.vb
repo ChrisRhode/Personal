@@ -21,6 +21,7 @@ Public Class cTreeManipulator
     Private mintWriteMaxNodeNbrSeen As Integer
 
     Dim gfNewContentFile As IO.StreamWriter = Nothing
+    Public gstrValidationErrorReason As String
 
     Public L As cLogging = Nothing
 
@@ -629,7 +630,7 @@ Public Class cTreeManipulator
             If (mintValidateAfterEveryThisManyChanges <> -1) Then
                 If ((mintChangeCounter Mod mintValidateAfterEveryThisManyChanges) = 0) Then
                     If (Not ValidateTree(tree, mintNumberOfNodesInTree, mintLastNodeNbrUsed)) Then
-                        MessageBox.Show("Warning!  Tree fails validation after transaction!")
+                        MessageBox.Show("Warning!  Tree fails validation after transaction! (" & gstrValidationErrorReason & ")")
                     Else
                         L.WriteToLog("Auto validation done, passed")
                     End If
@@ -732,7 +733,7 @@ Public Class cTreeManipulator
         '
         gboolValidationBypass = False
         If (Not ValidateTree(mTree, mintNumberOfNodesInTree, mintLastNodeNbrUsed)) Then
-            MessageBox.Show("Warning! Validation failed after load!")
+            MessageBox.Show("Warning! Validation failed after load! (" & gstrValidationErrorReason & ")")
         End If
     End Sub
 
@@ -746,7 +747,7 @@ Public Class cTreeManipulator
 
         CheckReady()
         If (Not ValidateTree(mTree, mintNumberOfNodesInTree, mintLastNodeNbrUsed)) Then
-            MessageBox.Show("Current tree structure did not pass validation, save cannot be done")
+            MessageBox.Show("Current tree structure did not pass validation, save cannot be done (" & gstrValidationErrorReason & ")")
             Exit Sub
         End If
         ' if not the first version, verify the current database file is gIntLastVersionWritten
@@ -813,12 +814,16 @@ Public Class cTreeManipulator
         Dim intValidateMaxNodeNbr As Integer = -1
         Dim boolResult As Boolean
 
+        gstrValidationErrorReason = ""
+
         boolResult = ValidateHelper(tree.Nodes(0), intValidateNodeCtr, intValidateMaxNodeNbr)
         If (Not boolResult) Then
             Return False
         ElseIf (intValidateNodeCtr <> intExpectedNumberOfNodes) Then
+            gstrValidationErrorReason = "Wrong number of nodes (seen:" & intValidateNodeCtr & ", expected:" & intExpectedNumberOfNodes & ")"
             Return False
         ElseIf (intValidateMaxNodeNbr <> intExpectedMaxNodeNbr) Then
+            gstrValidationErrorReason = "Wrong last node number in use (seen:" & intValidateMaxNodeNbr & ", expected:" & intExpectedMaxNodeNbr & ")"
             Return False
         Else
             Return True
@@ -843,11 +848,13 @@ Public Class cTreeManipulator
         If (thisItem.strChildOrder <> "") Then
             If (thisItem.strChildOrder = "-1") Then
                 If (n.Nodes.Count <> 0) Then
+                    gstrValidationErrorReason = "(" & thisItem.intNodeNbr & ") " & thisItem.strText & ": " & "Node is ordered and expected empty but is not empty"
                     Return False
                 End If
             Else
                 strElements = Split(thisItem.strChildOrder, ",")
                 If ((n.Nodes.Count - 1) <> UBound(strElements)) Then
+                    gstrValidationErrorReason = "(" & thisItem.intNodeNbr & ") " & thisItem.strText & ": " & "Node is ordered and not empty but has wrong number of children"
                     Return False
                 End If
                 boolIsOrdered = True
@@ -857,10 +864,12 @@ Public Class cTreeManipulator
             For intNdx = 0 To intLastNdx
                 childItem = CType(n.Nodes(intNdx).Tag, cToDoItem.sItemInfo)
                 If (childItem.intParentNodeNbr <> thisItem.intNodeNbr) Then
+                    gstrValidationErrorReason = "(" & childItem.intNodeNbr & ") " & childItem.strText & ": " & "Child node does not have correct parent"
                     Return False
                 End If
                 If (boolIsOrdered) Then
                     If (childItem.intNodeNbr <> Convert.ToInt32(strElements(intNdx))) Then
+                        gstrValidationErrorReason = "(" & childItem.intNodeNbr & ") " & childItem.strText & ": " & "Child node not in correct order under ordered parent"
                         Return False
                     End If
                 End If

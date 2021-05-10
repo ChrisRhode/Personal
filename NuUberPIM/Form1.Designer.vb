@@ -58,9 +58,9 @@ Partial Class Form1
         Me.btnAdd.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
         Me.btnAdd.Location = New System.Drawing.Point(661, 16)
         Me.btnAdd.Name = "btnAdd"
-        Me.btnAdd.Size = New System.Drawing.Size(75, 32)
+        Me.btnAdd.Size = New System.Drawing.Size(123, 32)
         Me.btnAdd.TabIndex = 1
-        Me.btnAdd.Text = "Add"
+        Me.btnAdd.Text = "Add / Find"
         Me.btnAdd.UseVisualStyleBackColor = True
         '
         'btnPriUp
@@ -118,7 +118,7 @@ Partial Class Form1
         'btnDelete
         '
         Me.btnDelete.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
-        Me.btnDelete.Location = New System.Drawing.Point(823, 16)
+        Me.btnDelete.Location = New System.Drawing.Point(828, 64)
         Me.btnDelete.Name = "btnDelete"
         Me.btnDelete.Size = New System.Drawing.Size(75, 32)
         Me.btnDelete.TabIndex = 7
@@ -148,7 +148,7 @@ Partial Class Form1
         'btnEdit
         '
         Me.btnEdit.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
-        Me.btnEdit.Location = New System.Drawing.Point(742, 16)
+        Me.btnEdit.Location = New System.Drawing.Point(828, 16)
         Me.btnEdit.Name = "btnEdit"
         Me.btnEdit.Size = New System.Drawing.Size(75, 32)
         Me.btnEdit.TabIndex = 10
@@ -157,7 +157,7 @@ Partial Class Form1
         '
         'btnMiniMode
         '
-        Me.btnMiniMode.Location = New System.Drawing.Point(22, 22)
+        Me.btnMiniMode.Location = New System.Drawing.Point(22, 16)
         Me.btnMiniMode.Name = "btnMiniMode"
         Me.btnMiniMode.Size = New System.Drawing.Size(99, 32)
         Me.btnMiniMode.TabIndex = 11
