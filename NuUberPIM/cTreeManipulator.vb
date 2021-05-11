@@ -327,7 +327,10 @@ Public Class cTreeManipulator
                 pItem.intPriority += 1
                 pNode.Text = TODO.GetDisplayTextForItem(pItem)  'because priority is included in text
                 pNode.Tag = pItem
+                ' improvement, blank out updates because it can move significantly
+                tree.BeginUpdate()
                 ResortAndRedisplayParent(tree, pNode)
+                tree.EndUpdate()
                 If (Not IsNothing(ft)) Then
                     boolIsChange = True
                     ' provide human understandable description of action to log
@@ -350,7 +353,10 @@ Public Class cTreeManipulator
                 pItem.intPriority -= 1
                 pNode.Text = TODO.GetDisplayTextForItem(pItem)  'because priority is included in text
                 pNode.Tag = pItem
+                ' improvement, blank out updates because it can move significantly
+                tree.BeginUpdate()
                 ResortAndRedisplayParent(tree, pNode)
+                tree.EndUpdate()
                 If (Not IsNothing(ft)) Then
                     boolIsChange = True
                     ' provide human understandable description of action to log
