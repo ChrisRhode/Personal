@@ -16,7 +16,7 @@ Public Class cTreeManipulator
     Public mstrCurrentDBFileName As String = ""
     Public mintValidateAfterEveryThisManyChanges As Integer = -1
     Public mintChangeCounter As Integer = 0
-
+    Private mboolAvoidRecursion As Boolean = False
     Private mintWriteNodeCounter As Integer
     Private mintWriteMaxNodeNbrSeen As Integer
 
@@ -957,6 +957,11 @@ Public Class cTreeManipulator
         'Dim intCurrentNodeNbr As Integer
         Dim rememberSelectedNode As TreeNode
 
+        If (mboolAvoidRecursion) Then
+            L.WriteToLog("Recursive call to ResortAndRedisplayParent avoided (probably due to AfterExpand event")
+            Exit Sub
+        End If
+        mboolAvoidRecursion = True
         item = CType(ofNode.Tag, cToDoItem.sItemInfo)
         L.WriteToLog("In ReSort(): parent of :" & item.strText, True)
         ' 03/24/2021 due to odd behavior when a node's position changes due to sort order change
@@ -1012,6 +1017,7 @@ Public Class cTreeManipulator
             L.WriteToLog("In ReSort(): restore selected node: " & TODO.DebugGetNodeDescr(rememberSelectedNode), True)
             tree.SelectedNode = rememberSelectedNode
             L.WriteToLog("In ReSort(): Finished", True)
+            mboolAvoidRecursion = False
             Exit Sub
         End If
 
@@ -1086,6 +1092,7 @@ Public Class cTreeManipulator
         L.WriteToLog("In ReSort(): restore selected node: " & TODO.DebugGetNodeDescr(rememberSelectedNode), True)
         tree.SelectedNode = rememberSelectedNode
         L.WriteToLog("In ReSort(): Finished", True)
+        mboolAvoidRecursion = False
     End Sub
 
 End Class

@@ -877,6 +877,7 @@ Public Class Form1
         Dim nodeWeExpand As TreeNode
         Dim boolRememberBypass As Boolean
 
+
         node = e.Node
         nodeWeExpand = node
         info = CType(node.Tag, cToDoItem.sItemInfo)
