@@ -22,6 +22,14 @@ Public Class frmTrnLogMgmt
     '   name of last DB file written
     '   name of previous DB file written (needed?)
     Private Sub frmTrnLogMgmt_Load(sender As Object, e As EventArgs) Handles Me.Load
+        LoadInternalData()
+    End Sub
+
+    Public Function SilentCheck() As Boolean
+        LoadInternalData()
+        Return CheckToCurrentPoint(False)
+    End Function
+    Private Sub LoadInternalData()
         '
         Dim fFileRead As IO.StreamReader
         Dim strBuffer As String
@@ -158,8 +166,8 @@ Public Class frmTrnLogMgmt
 
         mlclTRN = lclTRN
     End Sub
-    Private Sub btnCheckToThisPoint_Click(sender As Object, e As EventArgs) Handles btnCheckToThisPoint.Click
-        ' simply verify that the reconstructed tree matches the main tree
+
+    Private Function CheckToCurrentPoint(boolInteractive As Boolean) As Boolean
         Dim intErrorCount As Integer = 0
 
         Dim dCopy, dMain As New Dictionary(Of Integer, String)
@@ -175,28 +183,37 @@ Public Class frmTrnLogMgmt
         lMainKeys.Sort()
         intCopyLastNdx = lCopyKeys.Count - 1
         intMainLastNdx = lMainKeys.Count - 1
-        tbReviewLog.Text &= "Count of nodes in Main: " & lMainKeys.Count & vbCrLf
-        tbReviewLog.Text &= "Count of nodes in Copy: " & lCopyKeys.Count & vbCrLf
+
+        If (boolInteractive) Then
+            tbReviewLog.Text &= "Count of nodes in Main: " & lMainKeys.Count & vbCrLf
+            tbReviewLog.Text &= "Count of nodes in Copy: " & lCopyKeys.Count & vbCrLf
+        End If
 
         intCopyNdx = 0
         intMainNdx = 0
         Do While (True)
             If (intCopyNdx <= intCopyLastNdx) And (intMainNdx <= intMainLastNdx) Then
                 If (lCopyKeys(intCopyNdx) < lMainKeys(intMainNdx)) Then
-                    tbReviewLog.Text &= "Copy has unexpected node " & lCopyKeys(intCopyNdx) & vbCrLf
-                    tbReviewLog.Text &= "..<" & dCopy(lCopyKeys(intCopyNdx)) & ">" & vbCrLf
+                    If (boolInteractive) Then
+                        tbReviewLog.Text &= "Copy has unexpected node " & lCopyKeys(intCopyNdx) & vbCrLf
+                        tbReviewLog.Text &= "..<" & dCopy(lCopyKeys(intCopyNdx)) & ">" & vbCrLf
+                    End If
                     intErrorCount += 1
                     intCopyNdx += 1
                 ElseIf (lCopyKeys(intCopyNdx) > lMainKeys(intMainNdx)) Then
-                    tbReviewLog.Text &= "Main has unexpected node " & lCopyKeys(intCopyNdx) & vbCrLf
-                    tbReviewLog.Text &= "..<" & dMain(lMainKeys(intMainNdx)) & ">" & vbCrLf
+                    If (boolInteractive) Then
+                        tbReviewLog.Text &= "Main has unexpected node " & lCopyKeys(intCopyNdx) & vbCrLf
+                        tbReviewLog.Text &= "..<" & dMain(lMainKeys(intMainNdx)) & ">" & vbCrLf
+                    End If
                     intErrorCount += 1
                     intMainNdx += 1
                 Else
                     If (dCopy(lCopyKeys(intCopyNdx)) <> dMain(lMainKeys(intMainNdx))) Then
-                        tbReviewLog.Text &= "Copy and Main node content differ for node " & lCopyKeys(intCopyNdx)
-                        tbReviewLog.Text &= ".. Main <" & dMain(lMainKeys(intMainNdx)) & ">" & vbCrLf
-                        tbReviewLog.Text &= ".. Copy <" & dCopy(lCopyKeys(intCopyNdx)) & ">" & vbCrLf
+                        If (boolInteractive) Then
+                            tbReviewLog.Text &= "Copy and Main node content differ for node " & lCopyKeys(intCopyNdx)
+                            tbReviewLog.Text &= ".. Main <" & dMain(lMainKeys(intMainNdx)) & ">" & vbCrLf
+                            tbReviewLog.Text &= ".. Copy <" & dCopy(lCopyKeys(intCopyNdx)) & ">" & vbCrLf
+                        End If
                         intErrorCount += 1
                     End If
                     intCopyNdx += 1
@@ -204,26 +221,40 @@ Public Class frmTrnLogMgmt
                 End If
             Else
                 Do While (intCopyNdx <= intCopyLastNdx)
-                    tbReviewLog.Text &= "Copy has unexpected node " & lCopyKeys(intCopyNdx) & vbCrLf
-                    tbReviewLog.Text &= "..<" & dCopy(lCopyKeys(intCopyNdx)) & ">" & vbCrLf
+                    If (boolInteractive) Then
+                        tbReviewLog.Text &= "Copy has unexpected node " & lCopyKeys(intCopyNdx) & vbCrLf
+                        tbReviewLog.Text &= "..<" & dCopy(lCopyKeys(intCopyNdx)) & ">" & vbCrLf
+                    End If
                     intErrorCount += 1
                     intCopyNdx += 1
                 Loop
                 Do While (intMainNdx <= intMainLastNdx)
-                    tbReviewLog.Text &= "Main has unexpected node " & lCopyKeys(intCopyNdx) & vbCrLf
-                    tbReviewLog.Text &= "..<" & dMain(lMainKeys(intMainNdx)) & ">" & vbCrLf
+                    If (boolInteractive) Then
+                        tbReviewLog.Text &= "Main has unexpected node " & lCopyKeys(intCopyNdx) & vbCrLf
+                        tbReviewLog.Text &= "..<" & dMain(lMainKeys(intMainNdx)) & ">" & vbCrLf
+                    End If
                     intErrorCount += 1
                     intMainNdx += 1
                 Loop
                 Exit Do
             End If
         Loop
-        tbReviewLog.Text &= "Number of errors: " & intErrorCount & vbCrLf
-        tbReviewLog.SelectionStart = tbReviewLog.Text.Length - 1
-        tbReviewLog.ScrollToCaret()
+        If (boolInteractive) Then
+            tbReviewLog.Text &= "Number of errors: " & intErrorCount & vbCrLf
+            tbReviewLog.SelectionStart = tbReviewLog.Text.Length - 1
+            tbReviewLog.ScrollToCaret()
+        End If
+        Return (intErrorCount = 0)
+    End Function
+    Private Sub btnCheckToThisPoint_Click(sender As Object, e As EventArgs) Handles btnCheckToThisPoint.Click
+        If (CheckToCurrentPoint(True)) Then
+            MessageBox.Show("Current state was validated vs transaction log")
+        Else
+            MessageBox.Show("ERROR: Failed to validate current state vs transaction log")
+        End If
     End Sub
 
-    Sub WalkTree(d As Dictionary(Of Integer, String), n As TreeNode)
+    Private Sub WalkTree(d As Dictionary(Of Integer, String), n As TreeNode)
         Dim item As cToDoItem.sItemInfo
         Dim intNdx As Integer
         Dim intLastNdx As Integer

@@ -276,6 +276,7 @@ Public Class Form1
             gActual.mintLoadedDBVersion = 0
             gActual.mintLastNodeNbrUsed = 3
             gActual.mintNumberOfNodesInTree = 4
+            gActual.mstrKnownTagList = ""
             gActual.ApplyNewTransaction(gfTransactionFile, tvMain, "Saving", Nothing, Nothing)
             gActual.SaveCurrent() ' saves base as version 1 so we can successfully do rollbacks/compares from this point on
             gActual.ApplyNewTransaction(gfTransactionFile, tvMain, "Saved", Nothing, Nothing)
@@ -357,6 +358,7 @@ Public Class Form1
 
         fmAdd.tv = tvMain
         fmAdd.item = item
+        fmAdd.mstrCurrentMasterTagList = gActual.mstrKnownTagList
         fmAdd.ShowDialog()
 
         If (fmAdd.gintGoToNodeNbr <> -1) Then
@@ -396,8 +398,10 @@ Public Class Form1
 
         Dim fEdit As New frmEdit
         fEdit.sOriginal = currentItem
+        fEdit.mCurrentMasterTagList = gActual.mstrKnownTagList
         fEdit.ShowDialog()
         If (Not fEdit.gboolDidCancel) Then
+            gActual.mstrKnownTagList = fEdit.mCurrentMasterTagList
             L.WriteToLog(TODO.GetDiffDescr(currentItem, fEdit.sNew))
             gActual.ApplyNewTransaction(gfTransactionFile, tvMain, "Edit", fEdit.sNew, Nothing)
         End If
@@ -665,6 +669,27 @@ Public Class Form1
         fmTrnLog.ShowDialog()
         gfTransactionFile = System.IO.File.AppendText(gstrCurrentTransactionFile)
     End Sub
+
+    Function SilentValidationViaTRN() As Boolean
+        Dim fmTrnLog As New frmTrnLogMgmt
+        Dim boolResult As Boolean
+        fmTrnLog.gtvViewMain = tvMain
+        fmTrnLog.gstrTrnLogFN = gstrCurrentTransactionFile
+        fmTrnLog.gstrCurrentDBFN = gstrCurrentContentFile
+        fmTrnLog.gstrPreviousDBFN = gstrContentDirectory & "\" & gstrCurrentPIMFileBasename & "_BACKUP_" & Format((gActual.mintLoadedDBVersion - 1), "000000") & ".txt"
+        fmTrnLog.gintCurrentDBVersionNbr = gActual.mintLoadedDBVersion
+        fmTrnLog.gstrCurrentPIMFileBasename = gstrCurrentPIMFileBasename
+        fmTrnLog.gstrContentDirectory = gstrContentDirectory
+        fmTrnLog.L = L
+
+        gfTransactionFile.Close()
+
+        boolResult = fmTrnLog.SilentCheck
+
+        gfTransactionFile = System.IO.File.AppendText(gstrCurrentTransactionFile)
+
+        Return boolResult
+    End Function
     '
     ' Passive Control Handlers
     '
@@ -1046,8 +1071,16 @@ Public Class Form1
     End Sub
 
     Private Sub btnCheck_Click(sender As Object, e As EventArgs) Handles btnCheck.Click
-        If (gActual.ValidateTree(tvMain, gActual.mintNumberOfNodesInTree, gActual.mintLastNodeNbrUsed)) Then
-            L.WriteToLog("Validation passed")
+        If (gActual.ValidateTree(tvMain, gActual.mintNumberOfNodesInTree, gActual.mintLastNodeNbrUsed, gActual.mstrKnownTagList)) Then
+            If (chkIncludeTrnInCheck.Checked) Then
+                If (SilentValidationViaTRN()) Then
+                    L.WriteToLog("Validation passed by Validation and Transaction Log")
+                Else
+                    L.WriteToLog("Validation passed by Validation but not by Transaction Log")
+                End If
+            Else
+                L.WriteToLog("Validation passed")
+            End If
         Else
             L.WriteToLog("Validation failed (" & gActual.gstrValidationErrorReason & ")")
         End If

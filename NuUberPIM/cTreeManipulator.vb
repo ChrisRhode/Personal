@@ -16,6 +16,7 @@ Public Class cTreeManipulator
     Public mstrCurrentDBFileName As String = ""
     Public mintValidateAfterEveryThisManyChanges As Integer = -1
     Public mintChangeCounter As Integer = 0
+    Public mstrKnownTagList As String = ""
     Private mboolAvoidRecursion As Boolean = False
     Private mintWriteNodeCounter As Integer
     Private mintWriteMaxNodeNbrSeen As Integer
@@ -24,6 +25,7 @@ Public Class cTreeManipulator
     Public gstrValidationErrorReason As String
 
     Public L As cLogging = Nothing
+    Private UGBL As New cUtility
 
     Dim TODO As New cToDoItem
 
@@ -126,11 +128,13 @@ Public Class cTreeManipulator
                     ft.Flush()
                 Else
                     ' set up pItem and/or pNode based on strAttributeElements() only
-                    If UBound(strAttributeElements) <> 9 Then
-                        Throw New Exception("Add, wrong number of attribute elements")
+                    Dim intAttributeElementBound As Integer
+                    intAttributeElementBound = UBound(strAttributeElements)
+                    If (intAttributeElementBound < 9) Or (intAttributeElementBound > 11) Then
+                        Throw New Exception("Edit, wrong number of attribute elements")
                     End If
                     strAux = ""
-                    For intNdx = 0 To 9
+                    For intNdx = 0 To intAttributeElementBound
                         If (strAux <> "") Then
                             strAux &= ":"
                         End If
@@ -151,6 +155,9 @@ Public Class cTreeManipulator
                 aNode.Checked = pItem.isChecked
                 aNode.Tag = pItem
                 pNode.Nodes.Add(aNode)
+                ' 07/05/2021 update the master tag list if needed to include any tags now in the node
+                UpdateMasterTagList(pItem.strTags)
+                '
                 If (localItem.strChildOrder <> "") Then
                     TODO.BuildUpdatedOrderListInThisParentNode(pNode)
                 End If
@@ -174,11 +181,13 @@ Public Class cTreeManipulator
                     ft.Flush()
                 Else
                     ' set up pItem and/or pNode based on strAttributeElements() only
-                    If UBound(strAttributeElements) <> 9 Then
+                    Dim intAttributeElementBound As Integer
+                    intAttributeElementBound = UBound(strAttributeElements)
+                    If (intAttributeElementBound < 9) Or (intAttributeElementBound > 11) Then
                         Throw New Exception("Edit, wrong number of attribute elements")
                     End If
                     strAux = ""
-                    For intNdx = 0 To 9
+                    For intNdx = 0 To intAttributeElementBound
                         If (strAux <> "") Then
                             strAux &= ":"
                         End If
@@ -190,6 +199,9 @@ Public Class cTreeManipulator
                 aNode = TODO.FindNodeByNodeNbr(tree, pItem.intNodeNbr)
                 aNode.Tag = pItem
                 aNode.Text = TODO.GetDisplayTextForItem(pItem)
+                ' 07/05/2021 update the master tag list if needed to include any tags now in the node
+                UpdateMasterTagList(pItem.strTags)
+                '
                 ' *** ensure this is called consistently where needed.  Maybe only if node known to be visible now.
                 ' *** ensure ResortAndRedisplayParent is always getting 2nd param as node not its parent
                 ' *** ensure that events are handled properly (selection before and after)
@@ -234,6 +246,8 @@ Public Class cTreeManipulator
                         Case Else
                             Throw New Exception("Bad value for checkbox in transaction log")
                     End Select
+                    ' 07/11/2021 fix (why was this not caught before), set actual checked state of node
+                    pNode.Checked = pItem.isChecked
                 End If
                 pNode.Tag = pItem
                 'ResortAndRedisplayParent(tree, pNode)
@@ -683,7 +697,7 @@ Public Class cTreeManipulator
             mintChangeCounter += 1
             If (mintValidateAfterEveryThisManyChanges <> -1) Then
                 If ((mintChangeCounter Mod mintValidateAfterEveryThisManyChanges) = 0) Then
-                    If (Not ValidateTree(tree, mintNumberOfNodesInTree, mintLastNodeNbrUsed)) Then
+                    If (Not ValidateTree(tree, mintNumberOfNodesInTree, mintLastNodeNbrUsed, mstrKnownTagList)) Then
                         MessageBox.Show("Warning!  Tree fails validation after transaction! (" & gstrValidationErrorReason & ")")
                     Else
                         L.WriteToLog("Auto validation done, passed")
@@ -710,6 +724,7 @@ Public Class cTreeManipulator
         mintLastNodeNbrUsed = 0
         mintLoadedDBVersion = 0
         mintNumberOfNodesInTree = 0
+        mstrKnownTagList = ""
         CheckReady()
 
         fContentFile = System.IO.File.OpenText(mstrCurrentDBFileName)
@@ -747,6 +762,7 @@ Public Class cTreeManipulator
             ' *** actual issue with hidden root node does not get a create?
             intNumberOfNodesEncountered += 1
             item = TODO.DecodeItem(strBuffer)
+            UpdateMasterTagList(item.strTags)
             If (item.intNodeNbr = 0) Then
                 ' copy the create date to our manually created node 0
                 item2 = CType(rootnode.Tag, cToDoItem.sItemInfo)
@@ -787,7 +803,7 @@ Public Class cTreeManipulator
         mintNumberOfNodesInTree = intNumberOfNodesEncountered
         '
         gboolValidationBypass = False
-        If (Not ValidateTree(mTree, mintNumberOfNodesInTree, mintLastNodeNbrUsed)) Then
+        If (Not ValidateTree(mTree, mintNumberOfNodesInTree, mintLastNodeNbrUsed, mstrKnownTagList)) Then
             MessageBox.Show("Warning! Validation failed after load! (" & gstrValidationErrorReason & ")")
         End If
     End Sub
@@ -801,7 +817,7 @@ Public Class cTreeManipulator
         Dim strElements() As String
 
         CheckReady()
-        If (Not ValidateTree(mTree, mintNumberOfNodesInTree, mintLastNodeNbrUsed)) Then
+        If (Not ValidateTree(mTree, mintNumberOfNodesInTree, mintLastNodeNbrUsed, mstrKnownTagList)) Then
             MessageBox.Show("Current tree structure did not pass validation, save cannot be done (" & gstrValidationErrorReason & ")")
             Exit Sub
         End If
@@ -864,14 +880,16 @@ Public Class cTreeManipulator
         End If
     End Sub
 
-    Function ValidateTree(tree As TreeView, intExpectedNumberOfNodes As Integer, intExpectedMaxNodeNbr As Integer) As Boolean
+    Function ValidateTree(tree As TreeView, intExpectedNumberOfNodes As Integer, intExpectedMaxNodeNbr As Integer, strMasterTagList As String) As Boolean
         Dim intValidateNodeCtr As Integer = 0
         Dim intValidateMaxNodeNbr As Integer = -1
+        Dim intTest As Integer
+        Dim strTagsSeen As String = ""
         Dim boolResult As Boolean
 
         gstrValidationErrorReason = ""
 
-        boolResult = ValidateHelper(tree.Nodes(0), intValidateNodeCtr, intValidateMaxNodeNbr)
+        boolResult = ValidateHelper(tree.Nodes(0), intValidateNodeCtr, intValidateMaxNodeNbr, strTagsSeen)
         If (Not boolResult) Then
             Return False
         ElseIf (intValidateNodeCtr <> intExpectedNumberOfNodes) Then
@@ -881,11 +899,24 @@ Public Class cTreeManipulator
             gstrValidationErrorReason = "Wrong last node number in use (seen:" & intValidateMaxNodeNbr & ", expected:" & intExpectedMaxNodeNbr & ")"
             Return False
         Else
-            Return True
+            ' current final check is tags
+            intTest = UGBL.CompareCSL(mstrKnownTagList, strTagsSeen)
+            If (intTest = 1) Or (intTest = -1) Then
+                Return True
+            Else
+                gstrValidationErrorReason = "Master Tag List does not validate (seen:" & strTagsSeen & ", expected:" & strMasterTagList & ")"
+                Return False
+            End If
         End If
+
+        'ElseIf (strTagsSeen <> strMasterTagList) Then
+        'gstrValidationErrorReason = "Master Tag List does not validate (seen:" & strTagsSeen & ", expected:" & strMasterTagList & ")"
+        'Return False
+        'Else
+        'Return True
     End Function
 
-    Function ValidateHelper(n As TreeNode, ByRef intValidateNodeCtr As Integer, ByRef intValidateMaxNodeNbr As Integer) As Boolean
+    Function ValidateHelper(n As TreeNode, ByRef intValidateNodeCtr As Integer, ByRef intValidateMaxNodeNbr As Integer, ByRef strTagsSeen As String) As Boolean
         Dim thisItem, childItem As cToDoItem.sItemInfo
         Dim intNdx, intLastNdx As Integer
         Dim lowerOkay As Boolean
@@ -902,6 +933,7 @@ Public Class cTreeManipulator
             gstrValidationErrorReason = "(" & thisItem.intNodeNbr & ") " & thisItem.strText & ": " & "Check state of node does not match tag data"
             Return False
         End If
+        UGBL.MergeItemsIntoSortedCSL(strTagsSeen, thisItem.strTags)
         intLastNdx = n.Nodes.Count - 1
         ' if this node is ordered, get metainfo for checking order is correct
         If (thisItem.strChildOrder <> "") Then
@@ -932,7 +964,7 @@ Public Class cTreeManipulator
                         Return False
                     End If
                 End If
-                lowerOkay = ValidateHelper(n.Nodes(intNdx), intValidateNodeCtr, intValidateMaxNodeNbr)
+                lowerOkay = ValidateHelper(n.Nodes(intNdx), intValidateNodeCtr, intValidateMaxNodeNbr, strTagsSeen)
                 If (Not lowerOkay) Then
                     Return False
                 End If
@@ -958,7 +990,7 @@ Public Class cTreeManipulator
         Dim rememberSelectedNode As TreeNode
 
         If (mboolAvoidRecursion) Then
-            L.WriteToLog("Recursive call to ResortAndRedisplayParent avoided (probably due to AfterExpand event")
+            L.WriteToLog("Recursive call to ResortAndRedisplayParent avoided (probably due to AfterExpand event", True)
             Exit Sub
         End If
         mboolAvoidRecursion = True
@@ -1095,4 +1127,7 @@ Public Class cTreeManipulator
         mboolAvoidRecursion = False
     End Sub
 
+    Sub UpdateMasterTagList(strTagsInANode As String)
+        UGBL.MergeItemsIntoSortedCSL(mstrKnownTagList, strTagsInANode)
+    End Sub
 End Class

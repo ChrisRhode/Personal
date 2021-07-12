@@ -14,10 +14,12 @@ Public Class frmAdd
     Public gBoolCancel As Boolean = True
     Public gintGoToNodeNbr As Integer = -1
     Public item As cToDoItem.sItemInfo
+    Public mstrCurrentMasterTagList As String
     Dim gstrCurrentTargetWords() As String
     Dim gboolInTrashTree As Boolean = False
     Dim Matches As New List(Of sMatchItem)
     Dim TODO As New cToDoItem
+    Private UGBL As New cUtility
 
     Class MatchCompare : Implements IComparer(Of sMatchItem)
         Public Function Compare(ByVal i1m As sMatchItem, ByVal i2m As sMatchItem) As Integer Implements IComparer(Of sMatchItem).Compare
@@ -53,10 +55,41 @@ Public Class frmAdd
         End Function
 
     End Class
+
+    Class MatchTagCompare : Implements IComparer(Of sMatchItem)
+        Public Function Compare(ByVal i1m As sMatchItem, ByVal i2m As sMatchItem) As Integer Implements IComparer(Of sMatchItem).Compare
+            'Dim i1m, i2m As sMatchItem
+            'i1m = CType(i1, sMatchItem)
+            'i2m = CType(i2, sMatchItem)
+
+            If (i1m.intNodeNbr < i2m.intNodeNbr) Then
+                Return -1
+            Else
+                Return 1
+            End If
+        End Function
+
+    End Class
     Private Sub frmAdd_Load(sender As Object, e As EventArgs) Handles Me.Load
         ' May be unneeded, look at load behavior, triggered on Show or ShowDialog
         ' item is blank on entry so should be ok
         tbNewItem.Text = ""
+        '
+        LoadTagList()
+    End Sub
+
+    Sub LoadTagList()
+        Dim intNdx, intLastNdx As Integer
+        Dim strTagListElements() As String
+
+        clbTags.Items.Clear()
+        If (mstrCurrentMasterTagList <> "") Then
+            strTagListElements = Split(mstrCurrentMasterTagList, ",")
+            intLastNdx = UBound(strTagListElements)
+            For intNdx = 0 To intLastNdx
+                clbTags.Items.Add(strTagListElements(intNdx))
+            Next
+        End If
     End Sub
     Private Sub tbNewItem_TextChanged(sender As Object, e As EventArgs) Handles tbNewItem.TextChanged
         GenerateMatches()
@@ -160,6 +193,31 @@ Public Class frmAdd
             Next
         End If
     End Sub
+
+    Sub FindNodesWithTags(n As TreeNode, strTags As String)
+        Dim item As cToDoItem.sItemInfo
+        Dim match_item As sMatchItem
+        Dim intNdx, intLastNdx As Integer
+        Dim intResult As Integer
+        item = CType(n.Tag, cToDoItem.sItemInfo)
+        If (item.strTags <> "") Then
+            intResult = UGBL.CompareCSL(item.strTags, strTags)
+            If (intResult <> 0) Then
+                match_item = New sMatchItem
+                match_item.strItemText = TODO.GetDisplayTextForItem(item)
+                match_item.intNodeNbr = item.intNodeNbr
+                match_item.intWordMatchCnt = 0
+                Matches.Add(match_item)
+            End If
+        End If
+
+        intLastNdx = n.Nodes.Count - 1
+        If (intLastNdx >= 0) Then
+            For intNdx = 0 To intLastNdx
+                FindNodesWithTags(n.Nodes(intNdx), strTags)
+            Next
+        End If
+    End Sub
     ' handle transitons from and to edit form (text copy)
     Private Sub btnOK_Click(sender As Object, e As EventArgs) Handles btnOK.Click
         gBoolCancel = False
@@ -179,8 +237,10 @@ Public Class frmAdd
         Dim fEdit As New frmEdit
         item.strText = tbNewItem.Text.Trim
         fEdit.sOriginal = item
+        fEdit.mCurrentMasterTagList = mstrCurrentMasterTagList
         fEdit.ShowDialog()
         If (Not fEdit.gboolDidCancel) Then
+            mstrCurrentMasterTagList = fEdit.mCurrentMasterTagList
             item = fEdit.sNew
             ' *** may or may not trigger text changed
             tbNewItem.Text = item.strText
@@ -249,6 +309,33 @@ Public Class frmAdd
         If (intLastNdx >= 0) Then
             ' sort the list based on number of word matches first then alphabetically
             Matches.Sort(New MatchDateCompare)
+            '
+            For intNdx = 0 To intLastNdx
+                lbMatches.Items.Add(Matches(intNdx).strItemText)
+            Next
+        End If
+    End Sub
+
+    Private Sub btnFindItemsWithTags_Click(sender As Object, e As EventArgs) Handles btnFindItemsWithTags.Click
+        Dim intNdx, intLastNdx As Integer
+        Dim strTagList As String = ""
+
+        lbMatches.Items.Clear()
+        Matches.Clear()
+        intLastNdx = clbTags.Items.Count - 1
+        For intNdx = 0 To intLastNdx
+            If (clbTags.GetItemChecked(intNdx)) Then
+                If (strTagList <> "") Then
+                    strTagList &= ","
+                End If
+                strTagList &= clbTags.Items(intNdx).ToString
+            End If
+        Next
+        FindNodesWithTags(tv.Nodes(0), strTagList)
+        intLastNdx = Matches.Count - 1
+        If (intLastNdx >= 0) Then
+            ' sort the list based on number of word matches first then alphabetically
+            Matches.Sort(New MatchTagCompare)
             '
             For intNdx = 0 To intLastNdx
                 lbMatches.Items.Add(Matches(intNdx).strItemText)

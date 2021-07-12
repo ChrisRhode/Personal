@@ -144,4 +144,71 @@ Public Class cUtility
                 Throw New Exception("Bad YN value")
         End Select
     End Function
+
+    Public Sub MergeItemsIntoSortedCSL(ByRef strCSL As String, strMergeList As String)
+        Dim strMaster As String
+        Dim strTagList() As String
+        Dim strATag As String
+        Dim intNdx, intLastNdx As Integer
+
+        If (strMergeList = "") Then
+            Exit Sub
+        End If
+        strMaster = strCSL
+        If (strMaster <> "") Then
+            strMaster = "," & strMaster & ","
+        End If
+        strTagList = Split(strMergeList, ",")
+        intLastNdx = UBound(strTagList)
+        For intNdx = 0 To intLastNdx
+            strATag = strTagList(intNdx)
+            If (strMaster.IndexOf("," & strATag & ",") = -1) Then
+                If (strMaster = "") Then
+                    strMaster = ","
+                End If
+                strMaster &= strATag & ","
+            End If
+        Next
+        strMaster = strMaster.Substring(1, strMaster.Length - 2)
+        strTagList = Split(strMaster, ",")
+        Array.Sort(strTagList)
+        intLastNdx = UBound(strTagList)
+        For intNdx = 0 To intLastNdx
+            If (intNdx = 0) Then
+                strMaster = strTagList(0)
+            Else
+                strMaster &= "," & strTagList(intNdx)
+            End If
+        Next
+        strCSL = strMaster
+    End Sub
+
+    Public Function CompareCSL(strMaster As String, strCompareTo As String) As Integer
+        ' 1: lists match exactly
+        ' -1: strCompareTo is a subset of strMaster
+        ' 0: compare fails (strCompareTo has an element not in strMaster)
+        Dim strElements() As String
+        Dim strMasterCopy As String
+        Dim intNdx, intLastNdx As Integer
+        If (strMaster = strCompareTo) Then
+            Return 1
+        End If
+        ' master might be blank or nonblank but in either case empty compareto will be a subset
+        If (strCompareTo = "") Then
+            Return -1
+        End If
+        ' at this point we know strCompareTo is nonblank so if master is blank it is automatically a failure
+        If (strMaster = "") Then
+            Return 0
+        End If
+        strMasterCopy = "," & strMaster & ","
+        strElements = Split(strCompareTo, ",")
+        intLastNdx = UBound(strElements)
+        For intNdx = 0 To intLastNdx
+            If (strMasterCopy.IndexOf("," & strElements(intNdx) & ",") = -1) Then
+                Return 0
+            End If
+        Next
+        Return -1
+    End Function
 End Class

@@ -78,7 +78,7 @@ Partial Class frmTrnLogMgmt
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(8.0!, 16.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
-        Me.ClientSize = New System.Drawing.Size(800, 450)
+        Me.ClientSize = New System.Drawing.Size(793, 456)
         Me.Controls.Add(Me.btnSetAsRepair)
         Me.Controls.Add(Me.lbTrnSteps)
         Me.Controls.Add(Me.btnCheckToThisPoint)

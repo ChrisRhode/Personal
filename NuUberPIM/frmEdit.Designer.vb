@@ -45,6 +45,9 @@ Partial Class frmEdit
         Me.Label7 = New System.Windows.Forms.Label()
         Me.tbCreated = New System.Windows.Forms.TextBox()
         Me.tbModified = New System.Windows.Forms.TextBox()
+        Me.clbTags = New System.Windows.Forms.CheckedListBox()
+        Me.tbNewTag = New System.Windows.Forms.TextBox()
+        Me.btnAddTag = New System.Windows.Forms.Button()
         Me.SuspendLayout()
         '
         'Label1
@@ -105,7 +108,7 @@ Partial Class frmEdit
         Me.tbNotes.Multiline = True
         Me.tbNotes.Name = "tbNotes"
         Me.tbNotes.ScrollBars = System.Windows.Forms.ScrollBars.Both
-        Me.tbNotes.Size = New System.Drawing.Size(621, 167)
+        Me.tbNotes.Size = New System.Drawing.Size(496, 167)
         Me.tbNotes.TabIndex = 6
         '
         'tbDOE
@@ -245,12 +248,40 @@ Partial Class frmEdit
         Me.tbModified.Size = New System.Drawing.Size(198, 22)
         Me.tbModified.TabIndex = 22
         '
+        'clbTags
+        '
+        Me.clbTags.CheckOnClick = True
+        Me.clbTags.FormattingEnabled = True
+        Me.clbTags.Location = New System.Drawing.Point(620, 116)
+        Me.clbTags.Name = "clbTags"
+        Me.clbTags.Size = New System.Drawing.Size(213, 123)
+        Me.clbTags.TabIndex = 23
+        '
+        'tbNewTag
+        '
+        Me.tbNewTag.Location = New System.Drawing.Point(620, 68)
+        Me.tbNewTag.Name = "tbNewTag"
+        Me.tbNewTag.Size = New System.Drawing.Size(100, 22)
+        Me.tbNewTag.TabIndex = 24
+        '
+        'btnAddTag
+        '
+        Me.btnAddTag.Location = New System.Drawing.Point(726, 67)
+        Me.btnAddTag.Name = "btnAddTag"
+        Me.btnAddTag.Size = New System.Drawing.Size(107, 23)
+        Me.btnAddTag.TabIndex = 25
+        Me.btnAddTag.Text = "Add New Tag"
+        Me.btnAddTag.UseVisualStyleBackColor = True
+        '
         'frmEdit
         '
         Me.AcceptButton = Me.btnOK
         Me.AutoScaleDimensions = New System.Drawing.SizeF(8.0!, 16.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
-        Me.ClientSize = New System.Drawing.Size(800, 450)
+        Me.ClientSize = New System.Drawing.Size(878, 462)
+        Me.Controls.Add(Me.btnAddTag)
+        Me.Controls.Add(Me.tbNewTag)
+        Me.Controls.Add(Me.clbTags)
         Me.Controls.Add(Me.tbModified)
         Me.Controls.Add(Me.tbCreated)
         Me.Controls.Add(Me.Label7)
@@ -304,4 +335,7 @@ Partial Class frmEdit
     Friend WithEvents Label7 As Label
     Friend WithEvents tbCreated As TextBox
     Friend WithEvents tbModified As TextBox
+    Friend WithEvents clbTags As CheckedListBox
+    Friend WithEvents tbNewTag As TextBox
+    Friend WithEvents btnAddTag As Button
 End Class

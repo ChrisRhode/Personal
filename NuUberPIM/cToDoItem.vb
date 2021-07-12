@@ -17,6 +17,7 @@ Public Class cToDoItem
         Dim intPriority As Integer
         Dim isChecked As Boolean
         Dim strChildOrder As String
+        Dim strTags As String
     End Structure
 
     Public Function CreateNewItem(intNewNodeNbr As Integer) As sItemInfo
@@ -34,6 +35,7 @@ Public Class cToDoItem
             .intPriority = 0
             .isChecked = False
             .strChildOrder = ""
+            .strTags = ""
         End With
 
         Return item
@@ -79,7 +81,9 @@ Public Class cToDoItem
         If (item.strChildOrder <> "") Then
             strTemp &= "(ORDERED)"
         End If
-
+        If (item.strTags <> "") Then
+            strTemp &= "(TAGS:" & item.strTags & ")"
+        End If
         If (item.intPriority > 0) Then
             strTemp &= "(PRI:" & item.intPriority & ")"
         End If
@@ -112,10 +116,9 @@ Public Class cToDoItem
                 ":" & UGBL.ConvertToCompactDate(.dtDateOfEvent) &
                 ":" & UGBL.ConvertToCompactDate(.dtDateOfBumpToTop) &
                 ":" & UGBL.ConvertToCompactDateAndTime(.dtCreated) &
-                ":" & UGBL.ConvertToCompactDateAndTime(.dtModified)
-            If (.strChildOrder <> "") Then
-                strOutput &= ":" & .strChildOrder
-            End If
+                ":" & UGBL.ConvertToCompactDateAndTime(.dtModified) &
+                ":" & .strChildOrder &
+                ":" & .strTags
         End With
 
         Return strOutput
@@ -126,7 +129,7 @@ Public Class cToDoItem
         Dim sNew As New sItemInfo
 
         strElements = Split(strItemData, ":")
-        If (Not ((UBound(strElements) = 9) Or (UBound(strElements) = 10))) Then
+        If (Not ((UBound(strElements) = 9) Or (UBound(strElements) = 10) Or (UBound(strElements) = 11))) Then
             Throw New Exception("Bad format for item data as string")
         End If
         With sNew
@@ -140,11 +143,19 @@ Public Class cToDoItem
             .dtDateOfBumpToTop = UGBL.ConvertFromCompactDate(strElements(7))
             .dtCreated = UGBL.ConvertFromCompactDateAndTime(strElements(8))
             .dtModified = UGBL.ConvertFromCompactDateAndTime(strElements(9))
-            If (UBound(strElements) = 10) Then
-                .strChildOrder = strElements(10)
-            Else
-                .strChildOrder = ""
-            End If
+            Select Case UBound(strElements)
+                Case 9
+                    .strChildOrder = ""
+                    .strTags = ""
+                Case 10
+                    .strChildOrder = strElements(10)
+                    .strTags = ""
+                Case 11
+                    .strChildOrder = strElements(10)
+                    .strTags = strElements(11)
+                Case Else
+                    Throw New Exception("Bad number of elements in item encoding")
+            End Select
         End With
 
         Return sNew
@@ -218,7 +229,9 @@ Public Class cToDoItem
         If (itemOld.intPriority <> itemNew.intPriority) Then
             strDescr &= "Priority changed" & vbCrLf & "  Old:" & itemOld.intPriority & vbCrLf & "  New:" & itemNew.intPriority & vbCrLf
         End If
-
+        If (itemOld.strTags <> itemNew.strTags) Then
+            strDescr &= "Tags changed" & vbCrLf & "  Old:" & itemOld.strTags & vbCrLf & "  New:" & itemNew.strTags & vbCrLf
+        End If
         If (strDescr = "") Then
             strDescr = "No differences"
         Else
