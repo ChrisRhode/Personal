@@ -2,6 +2,10 @@
 Option Strict On
 
 Imports System.ComponentModel
+' 1.0.0.6
+'   Fix anchor for new "include transaction log verification for Check" checkbox
+' Needs
+'   Auto validation, in trn log code, should have an option to safely check via trn log as well
 ' On any release build, eliminate any code warnings
 ' AutoSave after N changes? (if TRN works well this should not be needed, try very log TRN recovery)
 ' Clean up transaction functions form
