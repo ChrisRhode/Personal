@@ -95,10 +95,12 @@ Public Class frmTrnLogMgmt
                         Continue Do
                     End If
                     ' must have at least one OPEN tag
-                    If (strTRNOperation <> "Open") Then
-                        Throw New Exception("Bad state in TRN log 002")
+                    ' 1.0.0.7 no, not always the case, as when Save was done, without yet closing the app
+                    If (strTRNOperation = "Open") Then
+                        intState = 3
+                    Else
+                        Exit Do
                     End If
-                    intState = 3
                 Case 3
                     ' skip over any extra OPEN tags
                     If (strTRNOperation <> "Open") Then

@@ -4,6 +4,12 @@ Option Strict On
 Imports System.ComponentModel
 ' 1.0.0.6
 '   Fix anchor for new "include transaction log verification for Check" checkbox
+' 1.0.0.7
+'   Fix verification when transaction log playback is used, when Save has been done during a session
+'   Add ability to export list of matches found via Find in Add/Find form
+'   Remember Partial Word Match setting in Add/Find form across invocations
+'   Protection against nonsense events when Add/Find form is loaded
+' -----
 ' Needs
 '   Auto validation, in trn log code, should have an option to safely check via trn log as well
 ' On any release build, eliminate any code warnings
@@ -136,7 +142,7 @@ Public Class Form1
     Dim gintMoveMode As Integer = 0
     ' *** how/where needed and where should event handlers be, here or in the transaction class? (for each, needed if not main visible tree?)
     Dim gBoolBypassEvents As Boolean = False
-
+    Dim gRememberPartialMatchSetting As Boolean = False
     Dim UGBL As New cUtility
     Dim gActual As cTreeManipulator
     Dim L As cLogging
@@ -363,8 +369,9 @@ Public Class Form1
         fmAdd.tv = tvMain
         fmAdd.item = item
         fmAdd.mstrCurrentMasterTagList = gActual.mstrKnownTagList
+        fmAdd.gboolPartialWordMatchesDefault = gRememberPartialMatchSetting
         fmAdd.ShowDialog()
-
+        gRememberPartialMatchSetting = fmAdd.gboolPartialWordMatchesDefault
         If (fmAdd.gintGoToNodeNbr <> -1) Then
             gActual.mintLastNodeNbrUsed -= 1
             tvMain.SelectedNode = TODO.FindNodeByNodeNbr(tvMain, fmAdd.gintGoToNodeNbr)

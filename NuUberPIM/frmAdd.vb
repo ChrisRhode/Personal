@@ -17,6 +17,8 @@ Public Class frmAdd
     Public mstrCurrentMasterTagList As String
     Dim gstrCurrentTargetWords() As String
     Dim gboolInTrashTree As Boolean = False
+    Public gboolPartialWordMatchesDefault As Boolean
+    Dim mboolIgnoreEvents As Boolean = False
     Dim Matches As New List(Of sMatchItem)
     Dim TODO As New cToDoItem
     Private UGBL As New cUtility
@@ -73,11 +75,17 @@ Public Class frmAdd
     Private Sub frmAdd_Load(sender As Object, e As EventArgs) Handles Me.Load
         ' May be unneeded, look at load behavior, triggered on Show or ShowDialog
         ' item is blank on entry so should be ok
+        mboolIgnoreEvents = True
         tbNewItem.Text = ""
+        cbPartialWordMatches.Checked = gboolPartialWordMatchesDefault
+        mboolIgnoreEvents = False
         '
         LoadTagList()
     End Sub
 
+    Private Sub frmAdd_FormClosing(sender As Object, e As FormClosingEventArgs) Handles Me.FormClosing
+        gboolPartialWordMatchesDefault = cbPartialWordMatches.Checked
+    End Sub
     Sub LoadTagList()
         Dim intNdx, intLastNdx As Integer
         Dim strTagListElements() As String
@@ -92,6 +100,7 @@ Public Class frmAdd
         End If
     End Sub
     Private Sub tbNewItem_TextChanged(sender As Object, e As EventArgs) Handles tbNewItem.TextChanged
+        If (mboolIgnoreEvents) Then Exit Sub
         GenerateMatches()
     End Sub
 
@@ -248,6 +257,7 @@ Public Class frmAdd
     End Sub
 
     Private Sub cbPartialWordMatches_CheckedChanged(sender As Object, e As EventArgs) Handles cbPartialWordMatches.CheckedChanged
+        If (mboolIgnoreEvents) Then Exit Sub
         GenerateMatches()
     End Sub
 
@@ -342,4 +352,112 @@ Public Class frmAdd
             Next
         End If
     End Sub
+
+    Private Sub btnExportMatches_Click(sender As Object, e As EventArgs) Handles btnExportMatches.Click
+        If (lbMatches.Items.Count = 0) Then
+            MessageBox.Show("There are no matches to export")
+            Exit Sub
+        End If
+        ' for now fixed filename
+        Dim fWritingFile As System.IO.StreamWriter
+        Dim intNdx, intLastNdx As Integer
+        Dim intNdx2, intLastNdx2 As Integer
+        Dim intNdx3, intLastNdx3 As Integer
+        Dim intThisNodeNbr As Integer
+        Dim path As List(Of Integer)
+        Dim currnode As TreeNode
+        Dim strBuffer As String
+        fWritingFile = System.IO.File.CreateText(My.Computer.FileSystem.SpecialDirectories.MyDocuments & "\NuUberPIM_Export.txt")
+        ' original version, one by one
+        'intLastNdx = lbMatches.Items.Count - 1
+        '' For each match
+        'For intNdx = 0 To intLastNdx
+        '    intThisNodeNbr = Matches(intNdx).intNodeNbr
+        '    path = New List(Of Integer)
+        '    ' construct the list of the node and all its parents from bottom to top (0..n-1)
+        '    path.Add(intThisNodeNbr)
+        '    Do While (True)
+        '        currnode = TODO.FindNodeByNodeNbr(tv, intThisNodeNbr)
+        '        item = CType(currnode.Tag, cToDoItem.sItemInfo)
+        '        If (item.intParentNodeNbr = -1) Then
+        '            Exit Do
+        '        End If
+        '        intThisNodeNbr = item.intParentNodeNbr
+        '        path.Add(intThisNodeNbr)
+        '    Loop
+        '    ' now emit the tree in reverse order so that topmost parent comes first (n-1...0)
+        '    intLastNdx2 = path.Count - 1
+        '    strBuffer = ""
+        '    For intNdx2 = intLastNdx2 To 0 Step -1
+        '        currnode = TODO.FindNodeByNodeNbr(tv, path(intNdx2))
+        '        item = CType(currnode.Tag, cToDoItem.sItemInfo)
+        '        ' show the structure
+        '        intLastNdx3 = intLastNdx2 - intNdx2 - 1
+        '        For intNdx3 = 0 To intLastNdx3
+        '            strBuffer &= "."
+        '        Next
+        '        If (intNdx2 = 0) Then
+        '            strBuffer &= " -> "
+        '        End If
+        '        strBuffer &= item.strText
+        '        If (intNdx2 <> 0) Then
+        '            strBuffer &= " // "
+        '        End If
+        '    Next
+        '    fWritingFile.WriteLine(strBuffer)
+        'Next
+        ' new version, use variant of standard recursion
+        Dim listOfMatchedNodeNbrs As New List(Of Integer)
+        Dim listOfParentNodeNbrs As New List(Of Integer)
+        intLastNdx = lbMatches.Items.Count - 1
+        For intNdx = 0 To intLastNdx
+            intThisNodeNbr = Matches(intNdx).intNodeNbr
+            listOfMatchedNodeNbrs.Add(intThisNodeNbr)
+            Do While True
+                currnode = TODO.FindNodeByNodeNbr(tv, intThisNodeNbr)
+                item = CType(currnode.Tag, cToDoItem.sItemInfo)
+                If (item.intParentNodeNbr = -1) Then
+                    Exit Do
+                End If
+                intThisNodeNbr = item.intParentNodeNbr
+                If (Not (listOfParentNodeNbrs.Contains(intThisNodeNbr))) Then
+                    listOfParentNodeNbrs.Add(intThisNodeNbr)
+                End If
+            Loop
+        Next
+        ExportIterator(tv.Nodes(0), fWritingFile, listOfMatchedNodeNbrs, listOfParentNodeNbrs, 0)
+        fWritingFile.Close()
+        MessageBox.Show("Export complete")
+    End Sub
+
+    Sub ExportIterator(currNode As TreeNode, fWritingFile As System.IO.StreamWriter, matchedNodeList As List(Of Integer), parentNodesList As List(Of Integer), intMyLevel As Integer)
+        Dim thisItem As cToDoItem.sItemInfo
+        Dim intThisNodeNbr As Integer
+        Dim intNdx, intLastndx As Integer
+        Dim strbuffer As String = ""
+
+        thisItem = CType(currNode.Tag, cToDoItem.sItemInfo)
+        intThisNodeNbr = thisItem.intNodeNbr
+        If (matchedNodeList.Contains(intThisNodeNbr)) Then
+            intLastndx = intMyLevel
+            For intNdx = 0 To intLastndx
+                strbuffer &= "."
+            Next
+            strbuffer &= " -> " & TODO.GetDisplayTextForItem(thisItem)
+            fWritingFile.WriteLine(strbuffer)
+        ElseIf (parentNodesList.Contains(intThisNodeNbr)) Then
+            intLastndx = intMyLevel
+            For intNdx = 0 To intLastndx
+                strbuffer &= "."
+            Next
+            strbuffer &= TODO.GetDisplayTextForItem(thisItem)
+            fWritingFile.WriteLine(strbuffer)
+        End If
+        intLastndx = currNode.Nodes.Count - 1
+        For intNdx = 0 To intLastndx
+            ExportIterator(currNode.Nodes(intNdx), fWritingFile, matchedNodeList, parentNodesList, intMyLevel + 1)
+        Next
+    End Sub
+
+
 End Class

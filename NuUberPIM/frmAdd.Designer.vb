@@ -33,6 +33,7 @@ Partial Class frmAdd
         Me.btnFindItemsWithDates = New System.Windows.Forms.Button()
         Me.btnFindItemsWithTags = New System.Windows.Forms.Button()
         Me.clbTags = New System.Windows.Forms.CheckedListBox()
+        Me.btnExportMatches = New System.Windows.Forms.Button()
         Me.SuspendLayout()
         '
         'tbNewItem
@@ -144,12 +145,22 @@ Partial Class frmAdd
         Me.clbTags.Size = New System.Drawing.Size(205, 123)
         Me.clbTags.TabIndex = 11
         '
+        'btnExportMatches
+        '
+        Me.btnExportMatches.Location = New System.Drawing.Point(724, 206)
+        Me.btnExportMatches.Name = "btnExportMatches"
+        Me.btnExportMatches.Size = New System.Drawing.Size(124, 32)
+        Me.btnExportMatches.TabIndex = 12
+        Me.btnExportMatches.Text = "Export Matches"
+        Me.btnExportMatches.UseVisualStyleBackColor = True
+        '
         'frmAdd
         '
         Me.AcceptButton = Me.btnOK
         Me.AutoScaleDimensions = New System.Drawing.SizeF(8.0!, 16.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
         Me.ClientSize = New System.Drawing.Size(951, 542)
+        Me.Controls.Add(Me.btnExportMatches)
         Me.Controls.Add(Me.clbTags)
         Me.Controls.Add(Me.btnFindItemsWithTags)
         Me.Controls.Add(Me.btnFindItemsWithDates)
@@ -179,4 +190,5 @@ Partial Class frmAdd
     Friend WithEvents btnFindItemsWithDates As Button
     Friend WithEvents btnFindItemsWithTags As Button
     Friend WithEvents clbTags As CheckedListBox
+    Friend WithEvents btnExportMatches As Button
 End Class
