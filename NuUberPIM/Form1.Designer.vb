@@ -250,6 +250,8 @@ Partial Class Form1
         '
         Me.chkIncludeTrnInCheck.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
         Me.chkIncludeTrnInCheck.AutoSize = True
+        Me.chkIncludeTrnInCheck.Checked = True
+        Me.chkIncludeTrnInCheck.CheckState = System.Windows.Forms.CheckState.Checked
         Me.chkIncludeTrnInCheck.Location = New System.Drawing.Point(743, 335)
         Me.chkIncludeTrnInCheck.Name = "chkIncludeTrnInCheck"
         Me.chkIncludeTrnInCheck.Size = New System.Drawing.Size(71, 21)

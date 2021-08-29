@@ -361,12 +361,12 @@ Public Class frmAdd
         ' for now fixed filename
         Dim fWritingFile As System.IO.StreamWriter
         Dim intNdx, intLastNdx As Integer
-        Dim intNdx2, intLastNdx2 As Integer
-        Dim intNdx3, intLastNdx3 As Integer
+        'Dim intNdx2, intLastNdx2 As Integer
+        'Dim intNdx3, intLastNdx3 As Integer
         Dim intThisNodeNbr As Integer
-        Dim path As List(Of Integer)
+        'Dim path As List(Of Integer)
         Dim currnode As TreeNode
-        Dim strBuffer As String
+        'Dim strBuffer As String
         fWritingFile = System.IO.File.CreateText(My.Computer.FileSystem.SpecialDirectories.MyDocuments & "\NuUberPIM_Export.txt")
         ' original version, one by one
         'intLastNdx = lbMatches.Items.Count - 1

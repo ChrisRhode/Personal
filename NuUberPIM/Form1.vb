@@ -9,22 +9,29 @@ Imports System.ComponentModel
 '   Add ability to export list of matches found via Find in Add/Find form
 '   Remember Partial Word Match setting in Add/Find form across invocations
 '   Protection against nonsense events when Add/Find form is loaded
+' 1.0.0.8
+'   Default is set for Check button to include transaction log validation
 ' -----
 ' Needs
-'   Auto validation, in trn log code, should have an option to safely check via trn log as well
+'   Use the code, take notes on what is still awkward/problematical
+'   Auto functionality testing (base + N changes = final, verify final)
+'   Auto-validation-every-N, Save, and exit (closing main form) should include transaction log validation (at least as an option)
+'   Dirty bit implementation, so Save and exit do not create a new db version if internal copy is not dirty
+'   Current method of recovery is awkward, forces/expects app close and restart?
 ' On any release build, eliminate any code warnings
-' AutoSave after N changes? (if TRN works well this should not be needed, try very log TRN recovery)
+' (DONE) AutoSave after N changes? (if TRN works well this should not be needed, try very log TRN recovery)
 ' Clean up transaction functions form
 ' .. what does check current instance do vs Check button now on main form
 ' .. display fake tree based on start to item selected in transaction list box (validate it after setting it up)
 ' .. save selected state as new current (default is using the whole selection)
-' Then work rewind/apply step by step with show, and ability to then resave that new state as current
+'...... this may be problematical because transaction log playback is now invalid
+'........ may need to start numbering transaction log entries, undo then says to ignore entries xx, have to scan for those
+'........ or rewrite current TRN log section with undone entries flagged or removed; this neans disallow manual edits (use flagging)
+' Then work rewind/apply step by step with show, and ability to then resave that new state as current (see above also)
 ' .. work code to allow apply not all of trn file ... auto applying all may just crash again (manual edit to TRN file for now)
 ' .. ready to work on rollback from start of previous version / can do an undo also
-' .. also auto verify and save when idle or after N operations (option)
-' .. Exercise TRN log base + TRN so far = current
-' number the transaction records so can record rollbacks?  Silly if allowing manual edits to fix?
-' using new change counter, save new version on close only if there are changes since last save
+' .. also auto verify and save when idle (option)
+' .. (DONE) Exercise TRN log base + TRN so far = current
 ' do we need/want form indicator for resort,validation etc in progress?
 ' work on preventing illegal moves
 ' (DONE) Fix for validation after initial load only
@@ -32,6 +39,7 @@ Imports System.ComponentModel
 ' (FIXED) priority algorithm ... was not handling priority corrrectly in several cases
 ' ReSort is done on Add or Edit ... but not on initial build, if we do it better, can avoid needing to re-sort so much
 ' .. appropriate use of BeginUpdate and EndUpdate
+' .. should CHOOSE either manual insertion in correct order OR use order list in node to set order when expanded
 ' (DONE) Should there be a tree sanity validator that can be called on demand?
 ' (DONE) need to walk through again, node expand and after selects that happen towards and moving a node
 ' (DONE) Clean up event sequence / bypass of events during move / DoEvents
@@ -58,7 +66,6 @@ Imports System.ComponentModel
 ' cTreeManipulator should be INSTANCED as either live or copy mode ... New() ... do not pass params to every call
 ' ..Sanity check all trn log class creation/entry, clean up (e.g. should just pass tv on New)
 ' ..should not be passing tree into calls any more, its in the transaction class
-' Also heavy testing needed for all operations (disallow and perform)
 ' (DONE) Soon need to be able to use TRN to recover from code crash
 ' (WORKED AROUND) weirdness with EOL on TRNLOG during recovery
 ' look for sanity and extra new version after auto recovery
@@ -116,7 +123,7 @@ Imports System.ComponentModel
 ' (DONE) Need to figure out how to pass sort comparer function to Sort method (ICompare implement vs Lambda vs AddressOf vs ...)
 ' Compartmentalizing item structure outside of Form1 / global variable block etc.
 ' (DONE) Review practice of ID'ing node type by node number instead of node type stored in record
-' Implement checkboxes including transactions
+' (DONE) Implement checkboxes including transactions
 ' Consistent prefixes for data types + g/m
 ' reserved words to avoid: Parent, Validate
 ' (DONE) Ensure all significant changes to tree/data are done as transactions
@@ -614,7 +621,7 @@ Public Class Form1
     Private Sub btnMoveBelow_Click(sender As Object, e As EventArgs) Handles btnMoveBelow.Click
         ' this will become a two step like regular move
         Dim localItem As New cToDoItem.sItemInfo
-        Dim aNode As TreeNode
+        'Dim aNode As TreeNode
 
         gNodeToMove = tvMain.SelectedNode
         If (gNodeToMove Is Nothing) Then
