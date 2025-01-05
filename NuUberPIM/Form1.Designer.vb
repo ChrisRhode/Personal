@@ -43,6 +43,8 @@ Partial Class Form1
         Me.btnMoveToTop = New System.Windows.Forms.Button()
         Me.btnCollapseAll = New System.Windows.Forms.Button()
         Me.chkIncludeTrnInCheck = New System.Windows.Forms.CheckBox()
+        Me.btnExpandAll = New System.Windows.Forms.Button()
+        Me.btnExport = New System.Windows.Forms.Button()
         Me.SuspendLayout()
         '
         'tvMain
@@ -100,7 +102,7 @@ Partial Class Form1
         'btnStartMultiMoveHere
         '
         Me.btnStartMultiMoveHere.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
-        Me.btnStartMultiMoveHere.Location = New System.Drawing.Point(667, 169)
+        Me.btnStartMultiMoveHere.Location = New System.Drawing.Point(662, 181)
         Me.btnStartMultiMoveHere.Name = "btnStartMultiMoveHere"
         Me.btnStartMultiMoveHere.Size = New System.Drawing.Size(123, 32)
         Me.btnStartMultiMoveHere.TabIndex = 5
@@ -110,7 +112,7 @@ Partial Class Form1
         'btnEndMultiMove
         '
         Me.btnEndMultiMove.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
-        Me.btnEndMultiMove.Location = New System.Drawing.Point(791, 169)
+        Me.btnEndMultiMove.Location = New System.Drawing.Point(786, 181)
         Me.btnEndMultiMove.Name = "btnEndMultiMove"
         Me.btnEndMultiMove.Size = New System.Drawing.Size(123, 32)
         Me.btnEndMultiMove.TabIndex = 6
@@ -169,7 +171,7 @@ Partial Class Form1
         'btnMove
         '
         Me.btnMove.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
-        Me.btnMove.Location = New System.Drawing.Point(667, 131)
+        Me.btnMove.Location = New System.Drawing.Point(662, 143)
         Me.btnMove.Name = "btnMove"
         Me.btnMove.Size = New System.Drawing.Size(75, 32)
         Me.btnMove.TabIndex = 12
@@ -189,7 +191,7 @@ Partial Class Form1
         'btnMoveUp
         '
         Me.btnMoveUp.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
-        Me.btnMoveUp.Location = New System.Drawing.Point(667, 246)
+        Me.btnMoveUp.Location = New System.Drawing.Point(662, 258)
         Me.btnMoveUp.Name = "btnMoveUp"
         Me.btnMoveUp.Size = New System.Drawing.Size(75, 32)
         Me.btnMoveUp.TabIndex = 14
@@ -199,7 +201,7 @@ Partial Class Form1
         'btnMoveDown
         '
         Me.btnMoveDown.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
-        Me.btnMoveDown.Location = New System.Drawing.Point(750, 247)
+        Me.btnMoveDown.Location = New System.Drawing.Point(745, 259)
         Me.btnMoveDown.Name = "btnMoveDown"
         Me.btnMoveDown.Size = New System.Drawing.Size(75, 32)
         Me.btnMoveDown.TabIndex = 15
@@ -209,7 +211,7 @@ Partial Class Form1
         'btnToggleNodeType
         '
         Me.btnToggleNodeType.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
-        Me.btnToggleNodeType.Location = New System.Drawing.Point(667, 208)
+        Me.btnToggleNodeType.Location = New System.Drawing.Point(662, 220)
         Me.btnToggleNodeType.Name = "btnToggleNodeType"
         Me.btnToggleNodeType.Size = New System.Drawing.Size(156, 32)
         Me.btnToggleNodeType.TabIndex = 16
@@ -219,7 +221,7 @@ Partial Class Form1
         'btnMoveBelow
         '
         Me.btnMoveBelow.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
-        Me.btnMoveBelow.Location = New System.Drawing.Point(831, 246)
+        Me.btnMoveBelow.Location = New System.Drawing.Point(826, 258)
         Me.btnMoveBelow.Name = "btnMoveBelow"
         Me.btnMoveBelow.Size = New System.Drawing.Size(75, 32)
         Me.btnMoveBelow.TabIndex = 17
@@ -229,7 +231,7 @@ Partial Class Form1
         'btnMoveToTop
         '
         Me.btnMoveToTop.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
-        Me.btnMoveToTop.Location = New System.Drawing.Point(667, 285)
+        Me.btnMoveToTop.Location = New System.Drawing.Point(662, 297)
         Me.btnMoveToTop.Name = "btnMoveToTop"
         Me.btnMoveToTop.Size = New System.Drawing.Size(123, 32)
         Me.btnMoveToTop.TabIndex = 18
@@ -239,7 +241,7 @@ Partial Class Form1
         'btnCollapseAll
         '
         Me.btnCollapseAll.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
-        Me.btnCollapseAll.Location = New System.Drawing.Point(791, 131)
+        Me.btnCollapseAll.Location = New System.Drawing.Point(786, 102)
         Me.btnCollapseAll.Name = "btnCollapseAll"
         Me.btnCollapseAll.Size = New System.Drawing.Size(123, 32)
         Me.btnCollapseAll.TabIndex = 19
@@ -252,18 +254,39 @@ Partial Class Form1
         Me.chkIncludeTrnInCheck.AutoSize = True
         Me.chkIncludeTrnInCheck.Checked = True
         Me.chkIncludeTrnInCheck.CheckState = System.Windows.Forms.CheckState.Checked
-        Me.chkIncludeTrnInCheck.Location = New System.Drawing.Point(743, 335)
+        Me.chkIncludeTrnInCheck.Location = New System.Drawing.Point(746, 335)
         Me.chkIncludeTrnInCheck.Name = "chkIncludeTrnInCheck"
-        Me.chkIncludeTrnInCheck.Size = New System.Drawing.Size(71, 21)
+        Me.chkIncludeTrnInCheck.Size = New System.Drawing.Size(68, 20)
         Me.chkIncludeTrnInCheck.TabIndex = 20
         Me.chkIncludeTrnInCheck.Text = "+ TRN"
         Me.chkIncludeTrnInCheck.UseVisualStyleBackColor = True
+        '
+        'btnExpandAll
+        '
+        Me.btnExpandAll.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
+        Me.btnExpandAll.Location = New System.Drawing.Point(662, 102)
+        Me.btnExpandAll.Name = "btnExpandAll"
+        Me.btnExpandAll.Size = New System.Drawing.Size(118, 32)
+        Me.btnExpandAll.TabIndex = 21
+        Me.btnExpandAll.Text = "Expand All"
+        Me.btnExpandAll.UseVisualStyleBackColor = True
+        '
+        'btnExport
+        '
+        Me.btnExport.Location = New System.Drawing.Point(557, 16)
+        Me.btnExport.Name = "btnExport"
+        Me.btnExport.Size = New System.Drawing.Size(99, 32)
+        Me.btnExport.TabIndex = 22
+        Me.btnExport.Text = "Export"
+        Me.btnExport.UseVisualStyleBackColor = True
         '
         'Form1
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(8.0!, 16.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
         Me.ClientSize = New System.Drawing.Size(926, 544)
+        Me.Controls.Add(Me.btnExport)
+        Me.Controls.Add(Me.btnExpandAll)
         Me.Controls.Add(Me.chkIncludeTrnInCheck)
         Me.Controls.Add(Me.btnCollapseAll)
         Me.Controls.Add(Me.btnMoveToTop)
@@ -313,4 +336,6 @@ Partial Class Form1
     Friend WithEvents btnMoveToTop As Button
     Friend WithEvents btnCollapseAll As Button
     Friend WithEvents chkIncludeTrnInCheck As CheckBox
+    Friend WithEvents btnExpandAll As Button
+    Friend WithEvents btnExport As Button
 End Class

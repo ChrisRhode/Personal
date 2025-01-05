@@ -11,6 +11,10 @@ Imports System.ComponentModel
 '   Protection against nonsense events when Add/Find form is loaded
 ' 1.0.0.8
 '   Default is set for Check button to include transaction log validation
+' 1.0.0.9 (CJR)
+'   Add Expand All button / functionality
+' 1.0.0.10 (CJR)
+'   Add Export button / functionality
 ' -----
 ' Needs
 '   Use the code, take notes on what is still awkward/problematical
@@ -1123,5 +1127,34 @@ Public Class Form1
         ' *** another case where sort should be done ... look at how sort works, it is destructive in a sense
         tvMain.Nodes(0).Expand()
         TODO.FindNodeByNodeNbr(tvMain, 2).Expand()
+    End Sub
+
+    Private Sub btnExpandAll_Click(sender As Object, e As EventArgs) Handles btnExpandAll.Click
+        tvMain.BeginUpdate()
+        tvMain.ExpandAll()
+        tvMain.EndUpdate()
+    End Sub
+
+    Private Sub btnExport_Click(sender As Object, e As EventArgs) Handles btnExport.Click
+        Dim ExportFileName As String = "C:\Users\ratcl\Documents\NuUberPIMExport.txt"
+        Dim aNode As TreeNode
+        Dim fExportFile As IO.StreamWriter
+
+        fExportFile = System.IO.File.CreateText(ExportFileName)
+        ExportRecursion(fExportFile, 1, tvMain.Nodes)
+        fExportFile.Close()
+        MessageBox.Show("Export complete")
+    End Sub
+
+    Private Sub ExportRecursion(fExportFile As IO.StreamWriter, NbrLevel As Integer, aNodes As TreeNodeCollection)
+        Dim Ndx, LastNdx As Integer
+        Dim Prefix As String
+
+        Prefix = "".PadLeft(NbrLevel - 1, CChar("."))
+        LastNdx = aNodes.Count - 1
+        For Ndx = 0 To LastNdx
+            fExportFile.WriteLine(Prefix & TODO.GetDisplayTextForItem(CType(aNodes(Ndx).Tag, cToDoItem.sItemInfo)))
+            ExportRecursion(fExportFile, NbrLevel + 1, aNodes(Ndx).Nodes)
+        Next
     End Sub
 End Class
